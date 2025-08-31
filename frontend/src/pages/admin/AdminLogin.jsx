@@ -3,7 +3,6 @@ import { useState, useEffect } from "react";
 import Input from "../../components/UI/Input";
 import Button from "../../components/UI/Button";
 import { authAPI } from "../../services/api";
-import PasswordManager from "../../components/PasswordManager";
 
 function AdminLogin() {
   const navigate = useNavigate();

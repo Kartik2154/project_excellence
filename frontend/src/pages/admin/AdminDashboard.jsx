@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useNavigate, Routes, Route } from "react-router-dom";
 import {
   Menu,
@@ -14,11 +14,12 @@ import {
   LayoutGrid,
 } from "lucide-react";
 import PasswordManager from "../../components/PasswordManager";
+import GuideManagement from "./GuideManagement";
 
 // Dummy page components (replace with real ones later)
-const GuidesPage = () => (
-  <div className="p-6 text-white">📘 Manage Guides Page</div>
-);
+// const GuidesPage = () => (
+//   <div className="p-6 text-white">📘 Manage Guides Page</div>
+// );
 const GroupsPage = () => (
   <div className="p-6 text-white">👥 Manage Groups Page</div>
 );
@@ -175,7 +176,7 @@ function Dashboard() {
         {/* Page Content */}
         <main className="flex-1 overflow-y-auto p-6">
           <Routes>
-            <Route path="guides" element={<GuidesPage />} />
+            <Route path="guides" element={<GuideManagement />} />
             <Route path="groups" element={<GroupsPage />} />
             <Route path="projects" element={<ProjectsPage />} />
             <Route path="schedules" element={<SchedulesPage />} />
