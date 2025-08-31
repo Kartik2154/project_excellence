@@ -1,11 +1,27 @@
-import './App.css'
+import { Routes, Route, Navigate } from "react-router-dom";
+import WelcomePage from "./pages/WelcomePage";
+import AdminLogin from "./pages/admin/AdminLogin";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import ProtectedRoute from "./components/ProtectedRoute";
 
-function App() {
+export default function App() {
   return (
-    <>
-  <h1> this is React running....</h1>
-    </>
-  )
-}
+    <Routes>
+      <Route path="/" element={<WelcomePage />} />
 
-export default App
+      {/* admin auth */}
+      <Route path="/admin/login" element={<AdminLogin />} />
+      <Route
+        path="/admin/dashboard/*"
+        element={
+          <ProtectedRoute>
+            <AdminDashboard />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* default */}
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  );
+}

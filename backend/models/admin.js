@@ -1,6 +1,6 @@
 // backend/src/models/Admin.js
 import mongoose from "mongoose";
-import bcrypt from "bcryptjs";
+import bcrypt from "bcrypt";
 
 const adminSchema = new mongoose.Schema(
   {
@@ -13,6 +13,12 @@ const adminSchema = new mongoose.Schema(
     password: {
       type: String,
       required: true,
+    },
+    otp: {
+      type: String,
+    },
+    otpExpiry: {
+      type: Date,
     },
   },
   { timestamps: true }

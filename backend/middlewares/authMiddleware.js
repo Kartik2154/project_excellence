@@ -1,6 +1,6 @@
 // backend/src/middlewares/authMiddleware.js
 import jwt from "jsonwebtoken";
-import Admin from "../models/Admin.js";
+import Admin from "../models/admin.js";
 
 export const protectAdmin = async (req, res, next) => {
   let token;
