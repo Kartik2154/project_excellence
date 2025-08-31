@@ -13,6 +13,7 @@ import {
   User,
   LayoutGrid,
 } from "lucide-react";
+import PasswordManager from "../../components/PasswordManager";
 
 // Dummy page components (replace with real ones later)
 const GuidesPage = () => (
@@ -138,20 +139,22 @@ function Dashboard() {
                 className="absolute right-0 mt-2 w-52 bg-gray-700 rounded-lg shadow-lg border border-gray-600"
               >
                 <ul className="py-2">
-                  <li>
+                  {/* <li>
                     <button
                       className="flex items-center w-full px-4 py-2 hover:bg-gray-600"
                       onClick={() => navigate("/admin/settings")}
                     >
                       <User size={18} className="mr-2 flex-shrink-0" /> Profile
                     </button>
-                  </li>
+                  </li> */}
                   <li>
                     <button
                       className="flex items-center w-full px-4 py-2 hover:bg-gray-600"
-                      onClick={() => navigate("/admin/change-password")}
+                      onClick={() =>
+                        navigate("/admin/dashboard/manage-password")
+                      }
                     >
-                      <Key size={18} className="mr-2 flex-shrink-0" /> Change
+                      <Key size={18} className="mr-2 flex-shrink-0" /> Manage
                       Password
                     </button>
                   </li>
@@ -178,6 +181,10 @@ function Dashboard() {
             <Route path="schedules" element={<SchedulesPage />} />
             <Route path="divisions" element={<DivisionsPage />} />
             <Route path="evaluation" element={<EvaluationPage />} />
+            <Route
+              path="manage-password"
+              element={<PasswordManager role="admin" />}
+            />
             <Route
               index
               element={

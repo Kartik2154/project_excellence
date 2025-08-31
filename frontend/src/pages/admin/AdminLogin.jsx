@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import Input from "../../components/UI/Input";
 import Button from "../../components/UI/Button";
 import { authAPI } from "../../services/api";
+import PasswordManager from "../../components/PasswordManager";
 
 function AdminLogin() {
   const navigate = useNavigate();
@@ -95,13 +96,23 @@ function AdminLogin() {
               {loading ? "Signing In..." : "Sign In"}
             </Button>
           </form>
-          <p className="mt-6 text-center text-white/80">
+          {/* <p className="mt-6 text-center text-white/80">
             Don&apos;t have an account?{" "}
             <Link
               to="/admin/register"
               className="text-accent-teal hover:underline font-semibold transition-colors duration-200"
             >
               Create Account
+            </Link>
+          </p> */}
+          <p className="mt-6 text-center text-white/80">
+            Having trouble Logging in{" "}
+            <Link
+              to="/admin/forgot-password"
+              state={{ email: formData.email }}
+              className="text-accent-teal hover:underline font-semibold transition-colors duration-200"
+            >
+              forgot Password?
             </Link>
           </p>
         </div>
