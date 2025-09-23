@@ -13,7 +13,7 @@ export default function App() {
       {/* admin auth */}
       <Route path="/admin/login" element={<AdminLogin />} />
       <Route
-        path="/admin/forgot-password"
+        path="/admin/forgot-password" 
         element={
           <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-800 to-gray-900">
             <div className="flex flex-col items-center">
