@@ -12,46 +12,46 @@ The system automates project group creation, guide allocation, submissions, eval
 
 ### 🔑 Authentication
 
-* Secure login for Admin, Guide, and Student.
-* JWT-based authentication and role-based access.
+- Secure login for Admin, Guide, and Student.
+- JWT-based authentication and role-based access.
 
 ### 👩‍💼 Admin
 
-* Manage student and guide accounts.
-* Assign guides to student groups.
-* Review project submissions.
-* Post announcements and exam schedules.
-* Generate project-related reports.
+- Manage student and guide accounts.
+- Assign guides to student groups.
+- Review project submissions.
+- Post announcements and exam schedules.
+- Generate project-related reports.
 
 ### 🧑‍🏫 Guide
 
-* View assigned student groups.
-* Provide feedback, ratings, and evaluations.
-* Communicate with students via group chat.
+- View assigned student groups.
+- Provide feedback, ratings, and evaluations.
+- Communicate with students via group chat.
 
 ### 🎓 Student
 
-* Register and form groups.
-* Submit project details and documents.
-* View assigned guide, schedules, and announcements.
-* Receive guide feedback and update work accordingly.
+- Register and form groups.
+- Submit project details and documents.
+- View assigned guide, schedules, and announcements.
+- Receive guide feedback and update work accordingly.
 
 ### 📊 Reporting & Dashboard
 
-* Role-specific dashboards.
-* Charts/graphs with **Chart.js / Recharts**.
-* Export reports in **PDF/Excel**.
+- Role-specific dashboards.
+- Charts/graphs with **Chart.js / Recharts**.
+- Export reports in **PDF/Excel**.
 
 ---
 
 ## 🛠️ Tech Stack
 
-* **Frontend**: React (Vite), TailwindCSS
-* **Backend**: Node.js, Express.js, Mongoose
-* **Database**: MongoDB (Atlas supported)
-* **Auth**: JSON Web Tokens (JWT)
-* **Version Control**: Git + GitHub
-* **Dev Tools**: VS Code, Draw\.io, UMLet
+- **Frontend**: React (Vite), TailwindCSS
+- **Backend**: Node.js, Express.js, Mongoose
+- **Database**: MongoDB (Atlas supported)
+- **Auth**: JSON Web Tokens (JWT)
+- **Version Control**: Git + GitHub
+- **Dev Tools**: VS Code, Draw\.io, UMLet
 
 ---
 
@@ -134,19 +134,19 @@ npm run dev
 
 ## � Future Enhancements
 
-* Notifications (Email/SMS).
-* File storage for project docs.
-* Role-based permission levels.
-* Docker support for deployment.
+- Notifications (Email/SMS).
+- File storage for project docs.
+- Role-based permission levels.
+- Docker support for deployment.
 
 ---
 
 ## 👥 Contributors
 
-* **Admin Module** – Your Name
-* **Guide Module** – Contributor TBD
-* **Student Module** – Contributor TBD
-* **UI/UX** – Contributor TBD
+- **Admin Module** – Your Name
+- **Guide Module** – Contributor TBD
+- **Student Module** – Contributor TBD
+- **UI/UX** – Contributor TBD
 
 ---
 
