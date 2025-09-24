@@ -143,10 +143,10 @@ npm run dev
 
 ## 👥 Contributors
 
-- **Kartik Patel** – Your Name
-- **Sanjay Lagariya** – @sanju2op
-- **Zeel Rathod** – Contributor TBD
-- **Aryan Patel** – Contributor TBD
+- **Admin Module** – Kartik2154
+- **Guide Module** – Contributor TBD
+- **Student Module** – Contributor TBD
+- **UI/UX** – Contributor TBD
 
 ---
 
