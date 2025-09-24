@@ -15,17 +15,9 @@ import {
 // Import your page components
 import PasswordManager from "../../components/PasswordManager";
 import GuideManagement from "./GuideManagement";
+import GroupManagement from "./GroupManagement";
 
 // Dummy page components (replace with real ones later)
-const GroupsPage = () => (
-  <div className="p-6 text-white">
-    <h2 className="text-3xl font-bold mb-4">👥 Manage Groups</h2>
-    <p>
-      This is the page for managing student groups. You can add, edit, or remove
-      groups here.
-    </p>
-  </div>
-);
 const ProjectsPage = () => (
   <div className="p-6 text-white">
     <h2 className="text-3xl font-bold mb-4">💼 Manage Projects</h2>
@@ -57,7 +49,6 @@ const EvaluationPage = () => (
 function Home({ menuItems, navigate }) {
   // Helper component for a dashboard card
   const DashboardCard = ({
-    // eslint-disable-next-line no-unused-vars
     icon: Icon,
     title,
     description,
@@ -245,12 +236,12 @@ function Dashboard() {
             {isSettingsMenuOpen && (
               <div
                 className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm flex justify-end p-4 sm:p-6"
-                onClick={() => setIsSettingsMenuOpen(false)} // This handler closes the menu when the background is clicked
+                onClick={() => setIsSettingsMenuOpen(false)}
               >
                 <div
                   ref={settingsMenuRef}
                   className="bg-white/20 backdrop-blur-xl rounded-xl shadow-lg border border-white/30 overflow-hidden animate-fade-in transform scale-100 transition duration-200"
-                  onClick={(e) => e.stopPropagation()} // This prevents clicks on the menu from bubbling up and closing it
+                  onClick={(e) => e.stopPropagation()}
                 >
                   <ul className="py-2">
                     <li>
@@ -292,7 +283,7 @@ function Dashboard() {
             element={<Home menuItems={menuItems} navigate={navigate} />}
           />
           <Route path="guides" element={<GuideManagement />} />
-          <Route path="groups" element={<GroupsPage />} />
+          <Route path="groups" element={<GroupManagement />} />
           <Route path="projects" element={<ProjectsPage />} />
           <Route path="schedules" element={<SchedulesPage />} />
           <Route path="divisions" element={<DivisionsPage />} />

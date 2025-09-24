@@ -158,6 +158,17 @@ export const getAllGuides = async (req, res) => {
   }
 };
 
+// ✅ Get only active guides (for dropdowns)
+export const getActiveGuides = async (req, res) => {
+  try {
+    const guides = await Guide.find({ status: "approved", isActive: true })
+      .select("name email expertise mobile")
+      .sort({ name: 1 });
+    res.json(guides);
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
 
 // PATCH /api/guides/:id/status
 export const updateGuideStatus = async (req, res) => {
@@ -192,12 +203,16 @@ export const updateGuideAvailability = async (req, res) => {
     const { isActive } = req.body;
 
     if (typeof isActive !== "boolean") {
-      return res.status(400).json({ message: "isActive must be true or false" });
+      return res
+        .status(400)
+        .json({ message: "isActive must be true or false" });
     }
 
     // If logged in as Guide, only allow self toggle
     if (req.guide && req.guide._id.toString() !== id) {
-      return res.status(403).json({ message: "Guides can only toggle their own availability" });
+      return res
+        .status(403)
+        .json({ message: "Guides can only toggle their own availability" });
     }
 
     const guide = await Guide.findByIdAndUpdate(
@@ -211,14 +226,15 @@ export const updateGuideAvailability = async (req, res) => {
     }
 
     res.json({
-      message: `Guide availability updated to ${isActive ? "Active" : "Inactive"}`,
+      message: `Guide availability updated to ${
+        isActive ? "Active" : "Inactive"
+      }`,
       guide,
     });
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
-
 
 // Update Guide Details (Admin only, no password here)
 export const updateGuide = async (req, res) => {
@@ -245,7 +261,6 @@ export const updateGuide = async (req, res) => {
   }
 };
 
-
 // ✅ Delete Guide (Admin only)
 export const deleteGuide = async (req, res) => {
   try {
@@ -261,7 +276,6 @@ export const deleteGuide = async (req, res) => {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
-
 
 // Create Guide (Admin only)
 export const createGuideByAdmin = async (req, res) => {

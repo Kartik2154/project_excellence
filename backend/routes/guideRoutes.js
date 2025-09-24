@@ -6,11 +6,12 @@ import {
   resetPasswordGuide,
   changePasswordGuide,
   getAllGuides,
+  getActiveGuides,
   updateGuideStatus,
   updateGuideAvailability,
   updateGuide,
   deleteGuide,
-  createGuideByAdmin
+  createGuideByAdmin,
 } from "../controllers/guideController.js";
 import { protectAdmin, protectGuide } from "../middlewares/authMiddleware.js";
 
@@ -34,6 +35,7 @@ router.patch("/me/active", protectGuide, async (req, res) => {
 
 // admin-only route
 router.get("/", protectAdmin, getAllGuides);
+router.get("/active", protectAdmin, getActiveGuides); // Get only active guides for dropdowns
 router.patch("/:id", protectAdmin, updateGuide);
 router.patch("/:id/status", protectAdmin, updateGuideStatus);
 router.patch("/:id/active", protectAdmin, updateGuideAvailability); // Admin toggles any guide
