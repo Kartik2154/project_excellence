@@ -143,7 +143,7 @@ npm run dev
 
 ## 👥 Contributors
 
-- **Admin Module** – Your Name
+- **Admin Module** – Kartik2154
 - **Guide Module** – Contributor TBD
 - **Student Module** – Contributor TBD
 - **UI/UX** – Contributor TBD
