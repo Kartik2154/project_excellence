@@ -259,20 +259,21 @@ function Dashboard() {
                           navigate("/admin/dashboard/manage-password");
                           setIsSettingsMenuOpen(false);
                         }}
-                        className="flex items-center w-full px-4 py-2 text-white hover:bg-cyan-400/30 transition duration-150"
+                        className="flex items-center w-full px-4 py-2 text-white hover:bg-cyan-400/50 transition duration-150 font-semibold"
                         aria-label="Change Password"
                       >
-                        <Key size={20} className="mr-3 text-white" /> Change
+                        <Key size={20} className="mr-3 text-cyan-400" /> Change
                         Password
                       </button>
                     </li>
                     <li>
                       <button
                         onClick={handleLogout}
-                        className="flex items-center w-full px-4 py-2 text-white hover:bg-cyan-400/30 transition duration-150"
+                        className="flex items-center w-full px-4 py-2 text-white hover:bg-cyan-400/50 transition duration-150 font-semibold"
                         aria-label="Logout"
                       >
-                        <LogOut size={20} className="mr-3 text-white" /> Logout
+                        <LogOut size={20} className="mr-3 text-cyan-400" />{" "}
+                        Logout
                       </button>
                     </li>
                   </ul>

@@ -1,4 +1,3 @@
-// frontend/src/pages/admin/GuideManagement.jsx
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -15,12 +14,13 @@ import {
   X,
   Share,
   Users,
-  Power,
-  Loader,
+  Download,
 } from "lucide-react";
 import { guideAPI } from "../../services/api";
 import { toast } from "react-toastify";
 import Input from "../../components/UI/Input";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable"; // Explicitly import autoTable
 
 // Simple error boundary
 class ErrorBoundary extends React.Component {
@@ -50,14 +50,13 @@ function GuideManagement() {
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [requestSearchTerm, setRequestSearchTerm] = useState("");
-
-  // Modal States
   const [showAddGuideModal, setShowAddGuideModal] = useState(false);
   const [showEditGuideModal, setShowEditGuideModal] = useState(false);
   const [showRequestsModal, setShowRequestsModal] = useState(false);
   const [showGroupsModal, setShowGroupsModal] = useState(false);
-
-  // Form States
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [pdfBlob, setPdfBlob] = useState(null);
+  const [pdfUrl, setPdfUrl] = useState("");
   const [newGuide, setNewGuide] = useState({
     name: "",
     expertise: "",
@@ -75,7 +74,6 @@ function GuideManagement() {
   });
   const [selectedGuideGroups, setSelectedGuideGroups] = useState([]);
 
-  // Static data for demonstration (replace with dynamic data from your backend if available)
   const availableExpertise = [
     "MERN Stack",
     "AI/ML",
@@ -95,7 +93,6 @@ function GuideManagement() {
     { id: "gr3", name: "Group Gamma", guideId: "60c72b2f9b1e8d4b3c8b4568" },
   ];
 
-  // Fetch guides on mount
   const fetchGuides = async () => {
     try {
       setLoading(true);
@@ -124,7 +121,6 @@ function GuideManagement() {
     }
   }, [editingGuide]);
 
-  // Filtered lists
   const filteredGuides = guides.filter(
     (guide) =>
       guide.status !== "pending" &&
@@ -138,7 +134,6 @@ function GuideManagement() {
       request.expertise.toLowerCase().includes(requestSearchTerm.toLowerCase())
   );
 
-  // Handlers
   const handleBack = () => {
     navigate("/admin/dashboard", { replace: true });
   };
@@ -170,22 +165,10 @@ function GuideManagement() {
     }
   };
 
-  // eslint-disable-next-line no-unused-vars
-  const handleToggleActiveStatus = async (id, isActive) => {
-    try {
-      await guideAPI.updateActiveStatus(id, { isActive: !isActive });
-      toast.success("Guide active status updated!");
-      fetchGuides();
-    } catch (err) {
-      toast.error("Failed to toggle active status.:", err);
-    }
-  };
-
   const handleViewRequests = () => {
     setShowRequestsModal(true);
   };
 
-  // eslint-disable-next-line no-unused-vars
   const handleViewGroups = (guideId) => {
     const guideGroups = groups.filter((group) => group.guideId === guideId);
     setSelectedGuideGroups(guideGroups);
@@ -249,6 +232,143 @@ function GuideManagement() {
     }
   };
 
+  const handleShareAsPDF = () => {
+    console.log("Generating PDF for guides");
+    const doc = new jsPDF();
+    doc.setFontSize(22);
+    doc.text("Guide List", 14, 20);
+
+    const tableColumn = [
+      "Name",
+      "Email",
+      "Phone",
+      "Expertise",
+      "Groups",
+      "Status",
+    ];
+    const tableRows = filteredGuides.map((guide) => {
+      const guideGroups = groups.filter((group) => group.guideId === guide._id);
+      const groupNames = guideGroups.map((group) => group.name).join(", ");
+      return [
+        guide.name,
+        guide.email,
+        guide.phone || "-",
+        guide.expertise,
+        groupNames || "-",
+        guide.isActive ? "Active" : "Not Active",
+      ];
+    });
+
+    // Apply autoTable to jsPDF instance
+    autoTable(doc, {
+      head: [tableColumn],
+      body: tableRows,
+      startY: 30,
+      headStyles: {
+        fillColor: [20, 184, 166],
+        textColor: [255, 255, 255],
+        fontStyle: "bold",
+      },
+      styles: {
+        cellPadding: 3,
+        fontSize: 10,
+        valign: "middle",
+      },
+      alternateRowStyles: {
+        fillColor: [240, 240, 240],
+      },
+    });
+
+    const pdfOutput = doc.output("blob");
+    const pdfUrl = URL.createObjectURL(pdfOutput);
+    setPdfBlob(pdfOutput);
+    setPdfUrl(pdfUrl);
+    setShowShareModal(true);
+  };
+
+  const handleSavePDF = () => {
+    console.log("Saving PDF");
+    const doc = new jsPDF();
+    doc.setFontSize(22);
+    doc.text("Guide List", 14, 20);
+
+    const tableColumn = [
+      "Name",
+      "Email",
+      "Phone",
+      "Expertise",
+      "Groups",
+      "Status",
+    ];
+    const tableRows = filteredGuides.map((guide) => {
+      const guideGroups = groups.filter((group) => group.guideId === guide._id);
+      const groupNames = guideGroups.map((group) => group.name).join(", ");
+      return [
+        guide.name,
+        guide.email,
+        guide.phone || "-",
+        guide.expertise,
+        groupNames || "-",
+        guide.isActive ? "Active" : "Not Active",
+      ];
+    });
+
+    autoTable(doc, {
+      head: [tableColumn],
+      body: tableRows,
+      startY: 30,
+      headStyles: {
+        fillColor: [20, 184, 166],
+        textColor: [255, 255, 255],
+        fontStyle: "bold",
+      },
+      styles: {
+        cellPadding: 3,
+        fontSize: 10,
+        valign: "middle",
+      },
+      alternateRowStyles: {
+        fillColor: [240, 240, 240],
+      },
+    });
+
+    doc.save(`Guide-List-${new Date().toISOString().slice(0, 10)}.pdf`);
+    setShowShareModal(false);
+    URL.revokeObjectURL(pdfUrl);
+  };
+
+  const handleSharePDF = async () => {
+    console.log("Sharing PDF");
+    if (navigator.share && pdfBlob) {
+      try {
+        await navigator.share({
+          files: [
+            new File(
+              [pdfBlob],
+              `Guide-List-${new Date().toISOString().slice(0, 10)}.pdf`,
+              { type: "application/pdf" }
+            ),
+          ],
+          title: "Guide List",
+          text: "List of guides from the Project Management System",
+        });
+        setShowShareModal(false);
+        URL.revokeObjectURL(pdfUrl);
+      } catch (error) {
+        console.error("Error sharing PDF:", error);
+        toast.error("Failed to share PDF.");
+      }
+    } else {
+      navigator.clipboard.writeText(pdfUrl).then(() => {
+        toast.success(
+          "PDF URL copied to clipboard! You can paste it to share."
+        );
+      });
+      setShowShareModal(false);
+      URL.revokeObjectURL(pdfUrl);
+    }
+  };
+
   return (
     <ErrorBoundary>
       <div className="min-h-screen flex flex-col bg-gray-900 font-sans text-white">
@@ -309,9 +429,7 @@ function GuideManagement() {
             </div>
             <div className="flex items-center space-x-4">
               <button
-                onClick={() => {
-                  /* Dummy function, user explicitly asked for no canvas */
-                }}
+                onClick={handleShareAsPDF}
                 className="flex items-center bg-gradient-to-r from-cyan-500 to-teal-500 text-white py-2 px-4 rounded-lg font-semibold hover:bg-opacity-90 hover:scale-105 transition duration-200 shadow-lg animate-pulse-once"
                 aria-label="Share Guide List as PDF"
               >
@@ -352,7 +470,6 @@ function GuideManagement() {
                 <Search
                   size={20}
                   className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/60 animate-icon-pulse"
-                  // className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/60 animate-icon-pulse"
                 />
               </div>
             </div>
@@ -473,28 +590,6 @@ function GuideManagement() {
                           >
                             <Trash2 size={20} />
                           </button>
-                          {/* <button
-                            onClick={() =>
-                              handleToggleActiveStatus(
-                                guide._id,
-                                guide.isActive
-                              )
-                            }
-                            className={`p-1 rounded-full ${
-                              guide.isActive
-                                ? "bg-green-500/30"
-                                : "bg-red-500/30"
-                            } transition-colors duration-200`}
-                          >
-                            <Power
-                              size={20}
-                              className={`${
-                                guide.isActive
-                                  ? "text-green-400"
-                                  : "text-red-400"
-                              }`}
-                            />
-                          </button> */}
                         </td>
                       </tr>
                     ))}
@@ -907,6 +1002,54 @@ function GuideManagement() {
                   is not currently assigned to any groups.
                 </div>
               )}
+            </div>
+          </div>
+        )}
+
+        {/* Share/Save PDF Modal */}
+        {showShareModal && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white/10 backdrop-blur-sm p-8 rounded-3xl shadow-lg border border-white/30 w-full max-w-md animate-fade-in-up relative">
+              <button
+                onClick={() => {
+                  setShowShareModal(false);
+                  URL.revokeObjectURL(pdfUrl);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    setShowShareModal(false);
+                    URL.revokeObjectURL(pdfUrl);
+                  }
+                }}
+                className="absolute top-4 right-4 text-white/70 hover:text-white transition duration-200"
+                aria-label="Close Share PDF Modal"
+              >
+                <X size={24} />
+              </button>
+              <h2 className="text-2xl font-bold text-white mb-6 text-center">
+                Share Guide List
+              </h2>
+              <p className="text-white/80 mb-6 text-center">
+                Choose an option to share or save the guide list PDF.
+              </p>
+              <div className="flex justify-center gap-4">
+                <button
+                  onClick={handleSavePDF}
+                  onKeyDown={(e) => e.key === "Enter" && handleSavePDF()}
+                  className="flex items-center bg-gradient-to-r from-cyan-500 to-teal-500 text-white py-2 px-4 rounded-lg font-semibold hover:bg-opacity-90 hover:scale-105 transition duration-200 shadow-lg animate-pulse-once"
+                  aria-label="Save PDF"
+                >
+                  <Download size={20} className="mr-2" /> Save PDF
+                </button>
+                <button
+                  onClick={handleSharePDF}
+                  onKeyDown={(e) => e.key === "Enter" && handleSharePDF()}
+                  className="flex items-center bg-gradient-to-r from-cyan-500 to-teal-500 text-white py-2 px-4 rounded-lg font-semibold hover:bg-opacity-90 hover:scale-105 transition duration-200 shadow-lg animate-pulse-once"
+                  aria-label="Share PDF"
+                >
+                  <Share size={20} className="mr-2" /> Share PDF
+                </button>
+              </div>
             </div>
           </div>
         )}
