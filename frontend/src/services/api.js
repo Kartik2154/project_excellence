@@ -52,12 +52,21 @@ export const studentAPI = {
 
 // ✅ Divisions API
 export const divisionAPI = {
-  getAll: () => api.get("/divisions"),
+  getAll: (params) => api.get("/divisions", { params }),
+  create: (payload) => api.post("/divisions", payload),
+  updateStatus: (id) => api.patch(`/divisions/${id}/status`),
+  delete: (id) => api.delete(`/divisions/${id}`),
 };
 
 // ✅ Enrollments API
 export const enrollmentAPI = {
   getAll: () => api.get("/enrollments"),
+  getByDivision: (divisionId) => api.get(`/enrollments/division/${divisionId}`),
+  create: (payload) => api.post("/enrollments", payload),
+  generate: (payload) => api.post("/enrollments/generate", payload),
+  delete: (id) => api.delete(`/enrollments/${id}`),
+  deleteAllByDivision: (divisionId) =>
+    api.delete(`/enrollments/division/${divisionId}`),
 };
 
 export default api;

@@ -16,8 +16,9 @@ import {
 import PasswordManager from "../../components/PasswordManager";
 import GuideManagement from "./GuideManagement";
 import GroupManagement from "./GroupManagement";
+import ManageDivisions from "./ManageDivisions";
 
-// Dummy page components (replace with real ones later)
+// Placeholder components for future implementation
 const ProjectsPage = () => (
   <div className="p-6 text-white">
     <h2 className="text-3xl font-bold mb-4">💼 Manage Projects</h2>
@@ -28,14 +29,6 @@ const SchedulesPage = () => (
   <div className="p-6 text-white">
     <h2 className="text-3xl font-bold mb-4">🗓️ Exam Schedules</h2>
     <p>This is the page for creating and managing exam schedules.</p>
-  </div>
-);
-const DivisionsPage = () => (
-  <div className="p-6 text-white">
-    <h2 className="text-3xl font-bold mb-4">🏫 Manage Divisions</h2>
-    <p>
-      This is the page for managing college divisions and student enrollments.
-    </p>
   </div>
 );
 const EvaluationPage = () => (
@@ -286,7 +279,7 @@ function Dashboard() {
           <Route path="groups" element={<GroupManagement />} />
           <Route path="projects" element={<ProjectsPage />} />
           <Route path="schedules" element={<SchedulesPage />} />
-          <Route path="divisions" element={<DivisionsPage />} />
+          <Route path="divisions" element={<ManageDivisions />} />
           <Route path="evaluation" element={<EvaluationPage />} />
           <Route
             path="manage-password"
