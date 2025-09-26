@@ -5,6 +5,11 @@ import cors from "cors";
 import connectDB from "./config/db.js";
 import adminRoutes from "./routes/adminRoutes.js";
 import guideRoutes from "./routes/guideRoutes.js";
+import groupRoutes from "./routes/groupRoutes.js";
+import studentRoutes from "./routes/studentRoutes.js";
+import divisionRoutes from "./routes/divisionRoutes.js";
+import enrollmentRoutes from "./routes/enrollmentRoutes.js";
+
 dotenv.config();
 connectDB();
 
@@ -22,9 +27,17 @@ app.use(express.json());
 
 // Routes
 app.use("/api/admin", adminRoutes);
-
 app.use("/api/guides", guideRoutes);
+app.use("/api/groups", groupRoutes);
+app.use("/api/students", studentRoutes);
+app.use("/api/divisions", divisionRoutes);
+app.use("/api/enrollments", enrollmentRoutes);
 
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ message: "Something went wrong!" });
+});
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
