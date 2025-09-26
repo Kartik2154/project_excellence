@@ -28,10 +28,9 @@ export const getAllGroups = async (req, res) => {
 export const getGroupById = async (req, res) => {
   try {
     const { id } = req.params;
-    const group = await Group.findById(id).populate(
-      "guide",
-      "name email expertise mobile"
-    );
+    const group = await Group.findById(id)
+      .populate("guide", "name email expertise mobile")
+      .populate("members", "enrollmentNumber studentName divisionId");
 
     if (!group) {
       return res.status(404).json({ message: "Group not found" });
@@ -156,60 +155,83 @@ export const deleteGroup = async (req, res) => {
   }
 };
 
-// GET /api/groups/:id/students/available - Get available students for a group
 export const getAvailableStudents = async (req, res) => {
   try {
     const { id } = req.params;
+    const { course, semester, year } = req.query;
+
+    if (!course || !semester || !year) {
+      return res.status(400).json({
+        message: "Course, semester, and year parameters are required",
+      });
+    }
+
     const group = await Group.findById(id);
 
     if (!group) {
       return res.status(404).json({ message: "Group not found" });
     }
 
-    // Get group's course and semester from first member
-    const firstMember = group.members[0];
-    if (!firstMember) {
-      return res
-        .status(400)
-        .json({ message: "Group has no members to determine course" });
-    }
+    const numericSemester = parseInt(semester, 10);
+    const numericYear = parseInt(year, 10);
 
-    const classParts = firstMember.className.split(" ");
-    const course = classParts[0];
-    const semester = parseInt(classParts[1]);
-
-    // Get all students in matching divisions
+    // Find active divisions matching the course, semester, and year
     const divisions = await Division.find({
-      course,
-      semester,
-      year: group.year,
+      course: { $regex: new RegExp(`^${course}`, "i") }, // Case-insensitive partial match
+      semester: numericSemester,
+      year: numericYear,
       status: "active",
     });
+
+    if (divisions.length === 0) {
+      console.log(
+        `No divisions found for course: ${course}, semester: ${numericSemester}, year: ${numericYear}`
+      );
+      return res.status(404).json({ message: "No matching divisions found" });
+    }
+
     const divisionIds = divisions.map((d) => d._id);
 
-    // Get all enrolled students in these divisions
+    // Get all enrolled students in these divisions who are registered
     const enrollments = await Enrollment.find({
       divisionId: { $in: divisionIds },
       isRegistered: true,
     });
 
-    // Get students already in groups
-    const groups = await Group.find({});
-    const assignedEnrollments = groups.flatMap((g) =>
+    if (enrollments.length === 0) {
+      console.log(`No enrollments found for division IDs: ${divisionIds}`);
+      return res
+        .status(404)
+        .json({ message: "No students enrolled in matching divisions" });
+    }
+
+    // Get all existing groups to find assigned enrollments
+    const allGroups = await Group.find({});
+    const assignedEnrollments = allGroups.flatMap((g) =>
       g.members.map((m) => m.enrollment)
     );
 
-    // Filter available students
+    // Filter out students already in any group, and exclude current group's members specifically
+    const currentGroupEnrollments = group.members.map((m) => m.enrollment);
     const availableStudents = enrollments
-      .filter((e) => !assignedEnrollments.includes(e.enrollmentNumber))
+      .filter(
+        (e) =>
+          !assignedEnrollments.includes(e.enrollmentNumber) &&
+          !currentGroupEnrollments.includes(e.enrollmentNumber)
+      )
       .map((e) => ({
         enrollmentNumber: e.enrollmentNumber,
-        name: e.studentName,
-        className: `${course} ${semester}`,
+        name: e.studentName || "Unknown Student",
+        className: `${course} ${numericSemester}`,
       }));
+
+    console.log(
+      `Found ${availableStudents.length} available students for group ${id}`
+    );
 
     res.json(availableStudents);
   } catch (error) {
+    console.error("Error in getAvailableStudents:", error);
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };

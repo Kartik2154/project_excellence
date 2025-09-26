@@ -99,7 +99,6 @@ function GroupManagement() {
   const [showAddStudentModal, setShowAddStudentModal] = useState(false);
   const [showDeleteStudentModal, setShowDeleteStudentModal] = useState(false);
   const [newGuide, setNewGuide] = useState("");
-  const [newStudent, setNewStudent] = useState("");
   const [studentToDelete, setStudentToDelete] = useState(null);
   const [successMessage, setSuccessMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
@@ -108,6 +107,7 @@ function GroupManagement() {
     new Date().getFullYear().toString()
   );
   const [availableStudents, setAvailableStudents] = useState([]);
+  const [selectedStudents, setSelectedStudents] = useState([]);
 
   // Replace with your actual admin token retrieval logic
   const adminToken = localStorage.getItem("token");
@@ -121,11 +121,8 @@ function GroupManagement() {
       try {
         const headers = { Authorization: `Bearer ${adminToken}` };
 
-        // Fetch guides
-        const guidesResponse = await axios.get(
-          `${API_BASE_URL}/guides/active`,
-          { headers }
-        );
+        // Fetch guides (public endpoint, no auth needed)
+        const guidesResponse = await axios.get(`${API_BASE_URL}/guides/active`);
         setGuides(guidesResponse.data);
 
         // Fetch groups with filters
@@ -150,7 +147,11 @@ function GroupManagement() {
         });
         setDivisions(divisionsResponse.data);
       } catch (error) {
-        setErrorMessage("Failed to fetch data. Please try again.");
+        if (error.response && error.response.status === 404) {
+          setErrorMessage("Data not available.");
+        } else {
+          setErrorMessage("Failed to fetch data. Please try again.");
+        }
         setTimeout(() => setErrorMessage(""), 3000);
         console.error("Error fetching data:", error);
       }
@@ -173,18 +174,21 @@ function GroupManagement() {
     .sort()
     .reverse();
 
-  // Get active guides
-  const activeGuides = guides.filter(
-    (guide) => guide.status === "approved" && guide.isActive === true
-  );
+  // Get active guides (already filtered by API)
+  const activeGuides = guides;
 
   // Get available students for a group
   const getAvailableStudents = async () => {
-    if (!selectedGroup) return [];
+    if (
+      !selectedGroup ||
+      !selectedGroup.members ||
+      selectedGroup.members.length === 0 ||
+      !selectedGroup.members[0]?.className
+    )
+      return [];
     try {
       const headers = { Authorization: `Bearer ${adminToken}` };
-      const classNameParts =
-        selectedGroup.members[0]?.className.split(" ") || [];
+      const classNameParts = selectedGroup.members[0].className.split(" ");
       const groupCourse = classNameParts[0];
       const groupSemester = parseInt(classNameParts[1], 10);
       const groupYear = selectedGroup.year;
@@ -202,8 +206,6 @@ function GroupManagement() {
       );
       return response.data;
     } catch (error) {
-      setErrorMessage("Failed to fetch available students.");
-      setTimeout(() => setErrorMessage(""), 3000);
       console.error("Error fetching available students:", error);
       return [];
     }
@@ -222,7 +224,11 @@ function GroupManagement() {
       });
       setSelectedGroup(response.data);
     } catch (error) {
-      setErrorMessage("Failed to fetch group details.");
+      if (error.response && error.response.status === 404) {
+        setErrorMessage("Group data not available.");
+      } else {
+        setErrorMessage("Failed to fetch group details.");
+      }
       setTimeout(() => setErrorMessage(""), 3000);
       console.error("Error fetching group details:", error);
     }
@@ -232,9 +238,7 @@ function GroupManagement() {
     setSelectedGroup(null);
   };
 
-  const getGuideDetails = (guideName) => {
-    return guides.find((guide) => guide.name === guideName) || {};
-  };
+  // No need for getGuideDetails since guide is populated; use directly
 
   const openChangeGuideModal = () => {
     setNewGuide(selectedGroup.guide.name);
@@ -244,12 +248,17 @@ function GroupManagement() {
   const handleSaveGuideChange = async () => {
     try {
       const headers = { Authorization: `Bearer ${adminToken}` };
-      const guideId = guides.find((guide) => guide.name === newGuide)?._id;
+      const selectedGuideObj = guides.find((guide) => guide.name === newGuide);
+      if (!selectedGuideObj) {
+        throw new Error("Selected guide not found");
+      }
+      const guideId = selectedGuideObj._id;
       await axios.put(
         `${API_BASE_URL}/groups/${selectedGroup._id}`,
         { guide: guideId },
         { headers }
       );
+      // Update groups list with new guide name
       setGroups(
         groups.map((group) =>
           group._id === selectedGroup._id
@@ -257,7 +266,8 @@ function GroupManagement() {
             : group
         )
       );
-      setSelectedGroup((prev) => ({ ...prev, guide: { name: newGuide } }));
+      // Update selectedGroup with full guide object to preserve details
+      setSelectedGroup((prev) => ({ ...prev, guide: selectedGuideObj }));
       setShowChangeGuideModal(false);
       setSuccessMessage(
         `Guide for ${selectedGroup.name} changed successfully!`
@@ -286,59 +296,6 @@ function GroupManagement() {
       setErrorMessage("Failed to delete group.");
       setTimeout(() => setErrorMessage(""), 3000);
       console.error("Error deleting group:", error);
-    }
-  };
-
-  const handleAddStudent = async () => {
-    if (selectedGroup.members.length >= 4) {
-      setSuccessMessage("Cannot add more than 4 students to a group!");
-      setTimeout(() => setSuccessMessage(""), 3000);
-      return;
-    }
-    if (!newStudent) {
-      setSuccessMessage("Please select a student to add!");
-      setTimeout(() => setSuccessMessage(""), 3000);
-      return;
-    }
-    try {
-      const headers = { Authorization: `Bearer ${adminToken}` };
-      const studentData = (await getAvailableStudents()).find(
-        (s) => s.enrollmentNumber === newStudent
-      );
-      if (!studentData) {
-        setSuccessMessage("Selected student is not available!");
-        setTimeout(() => setSuccessMessage(""), 3000);
-        return;
-      }
-      const newMember = {
-        name: studentData.name,
-        enrollment: studentData.enrollmentNumber,
-        className: studentData.className,
-      };
-      const updatedMembers = [...selectedGroup.members, newMember];
-      await axios.put(
-        `${API_BASE_URL}/groups/${selectedGroup._id}`,
-        { members: updatedMembers },
-        { headers }
-      );
-      setGroups(
-        groups.map((group) =>
-          group._id === selectedGroup._id
-            ? { ...group, members: updatedMembers }
-            : group
-        )
-      );
-      setSelectedGroup((prev) => ({ ...prev, members: updatedMembers }));
-      setShowAddStudentModal(false);
-      setNewStudent("");
-      setSuccessMessage(
-        `Student ${studentData.name} added to ${selectedGroup.name}!`
-      );
-      setTimeout(() => setSuccessMessage(""), 3000);
-    } catch (error) {
-      setErrorMessage("Failed to add student.");
-      setTimeout(() => setErrorMessage(""), 3000);
-      console.error("Error adding student:", error);
     }
   };
 
@@ -382,8 +339,8 @@ function GroupManagement() {
   // Fetch available students when modal opens
   const handleOpenAddStudentModal = async () => {
     setShowAddStudentModal(true);
-    setNewStudent("");
     setAvailableStudents([]);
+    setSelectedStudents([]);
 
     if (selectedGroup) {
       try {
@@ -395,9 +352,72 @@ function GroupManagement() {
     }
   };
 
+  const handleCheckboxChange = (enrollmentNumber) => {
+    setSelectedStudents((prev) =>
+      prev.includes(enrollmentNumber)
+        ? prev.filter((id) => id !== enrollmentNumber)
+        : [...prev, enrollmentNumber]
+    );
+  };
+
+  const handleAddSelectedStudents = async () => {
+    if (selectedStudents.length === 0) {
+      setErrorMessage("Please select at least one student to add.");
+      setTimeout(() => setErrorMessage(""), 3000);
+      return;
+    }
+    if (selectedGroup.members.length + selectedStudents.length > 4) {
+      setErrorMessage("Cannot add more than 4 students to a group!");
+      setTimeout(() => setErrorMessage(""), 3000);
+      return;
+    }
+    try {
+      const headers = { Authorization: `Bearer ${adminToken}` };
+      const newMembers = selectedStudents.map((enrollment) => {
+        const studentData = availableStudents.find(
+          (s) => s.enrollmentNumber === enrollment
+        );
+        return {
+          name: studentData.name,
+          enrollment: studentData.enrollmentNumber,
+          className: studentData.className,
+        };
+      });
+      const updatedMembers = [...selectedGroup.members, ...newMembers];
+      await axios.put(
+        `${API_BASE_URL}/groups/${selectedGroup._id}`,
+        { members: updatedMembers },
+        { headers }
+      );
+      setGroups(
+        groups.map((group) =>
+          group._id === selectedGroup._id
+            ? { ...group, members: updatedMembers }
+            : group
+        )
+      );
+      setSelectedGroup((prev) => ({ ...prev, members: updatedMembers }));
+      // Remove added students from available list
+      setAvailableStudents(
+        availableStudents.filter(
+          (s) => !selectedStudents.includes(s.enrollmentNumber)
+        )
+      );
+      setShowAddStudentModal(false);
+      setSuccessMessage(
+        `${selectedStudents.length} student(s) added to ${selectedGroup.name}!`
+      );
+      setTimeout(() => setSuccessMessage(""), 3000);
+    } catch (error) {
+      setErrorMessage("Failed to add students.");
+      setTimeout(() => setErrorMessage(""), 3000);
+      console.error("Error adding students:", error);
+    }
+  };
+
   // Render details view
   const renderDetailsView = () => {
-    const guideDetails = getGuideDetails(selectedGroup.guide.name);
+    const guideDetails = selectedGroup.guide || {};
     const hasMembers =
       selectedGroup.members && selectedGroup.members.length > 0;
 
@@ -487,7 +507,7 @@ function GroupManagement() {
                   className="mr-3 text-accent-teal animate-icon-pulse"
                 />
                 <p className="font-semibold">Name:</p>
-                <span className="ml-2">{guideDetails.name}</span>
+                <span className="ml-2">{guideDetails.name || "N/A"}</span>
               </div>
               <div className="flex items-center">
                 <Code
@@ -495,7 +515,7 @@ function GroupManagement() {
                   className="mr-3 text-accent-teal animate-icon-pulse"
                 />
                 <p className="font-semibold">Expertise:</p>
-                <span className="ml-2">{guideDetails.expertise}</span>
+                <span className="ml-2">{guideDetails.expertise || "N/A"}</span>
               </div>
               <div className="flex items-center">
                 <Smartphone
@@ -503,7 +523,7 @@ function GroupManagement() {
                   className="mr-3 text-accent-teal animate-icon-pulse"
                 />
                 <p className="font-semibold">Mobile:</p>
-                <span className="ml-2">{guideDetails.mobile}</span>
+                <span className="ml-2">{guideDetails.mobile || "N/A"}</span>
               </div>
             </div>
           </div>
@@ -768,7 +788,7 @@ function GroupManagement() {
       {/* Add Student Modal */}
       {showAddStudentModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 animate-fade-in">
-          <div className="bg-light-glass backdrop-blur-sm p-8 rounded-2xl shadow-neumorphic border border-white/20 w-full max-w-sm relative transform transition-all duration-200 scale-100 hover:scale-102">
+          <div className="bg-light-glass backdrop-blur-sm p-8 rounded-2xl shadow-neumorphic border border-white/20 w-full max-w-2xl relative transform transition-all duration-200 scale-100 hover:scale-102">
             <button
               onClick={() => setShowAddStudentModal(false)}
               className="absolute top-4 right-4 text-white/70 hover:text-white transition duration-200"
@@ -777,62 +797,64 @@ function GroupManagement() {
               <X size={24} className="animate-icon-pulse" />
             </button>
             <h2 className="text-2xl font-bold text-white mb-6 text-center tracking-tight">
-              Add Student
+              Add Student to Group
             </h2>
-            <label
-              htmlFor="new-student-select"
-              className="block text-white text-sm font-semibold mb-2"
-            >
-              Select a student
-            </label>
-            <div className="relative">
-              <select
-                id="new-student-select"
-                className="student-select w-full p-3 bg-white/10 text-white rounded-lg border border-white/20 focus:outline-none focus:ring-2 focus:ring-accent-teal transition-all duration-200 shadow-neumorphic backdrop-blur-sm appearance-none cursor-pointer pr-8"
-                style={{
-                  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2300b8d4'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E")`,
-                  backgroundRepeat: "no-repeat",
-                  backgroundPosition: "right 0.5rem center",
-                  backgroundSize: "1.5em",
-                }}
-                value={newStudent}
-                onChange={(e) => setNewStudent(e.target.value)}
-              >
-                <option value="">Select a student</option>
-                {availableStudents.length > 0 ? (
-                  availableStudents.map((student) => (
-                    <option
-                      key={student.enrollmentNumber}
-                      value={student.enrollmentNumber}
-                    >
-                      {student.name} ({student.enrollmentNumber})
-                    </option>
-                  ))
-                ) : (
-                  <option value="" disabled>
-                    No eligible students available
-                  </option>
-                )}
-              </select>
+            <div className="space-y-4 max-h-96 overflow-y-auto">
+              {availableStudents.length > 0 ? (
+                availableStudents.map((student) => (
+                  <div
+                    key={student.enrollmentNumber}
+                    className="flex items-center justify-between bg-white/10 p-4 rounded-lg"
+                  >
+                    <div className="flex items-center">
+                      <input
+                        type="checkbox"
+                        id={`student-${student.enrollmentNumber}`}
+                        checked={selectedStudents.includes(
+                          student.enrollmentNumber
+                        )}
+                        onChange={() =>
+                          handleCheckboxChange(student.enrollmentNumber)
+                        }
+                        className="mr-4 w-4 h-4 text-accent-teal bg-white/10 border-white/20 rounded focus:ring-accent-teal focus:ring-2"
+                      />
+                      <div>
+                        <span className="font-semibold text-white">
+                          {student.name}
+                        </span>
+                        <div className="text-sm text-white/80">
+                          {student.enrollmentNumber}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <p className="text-white/70 text-center">
+                  No eligible students available
+                </p>
+              )}
             </div>
-            <div className="flex justify-end gap-4 mt-6">
-              <button
-                type="button"
-                onClick={() => setShowAddStudentModal(false)}
-                className="flex items-center bg-gray-600/80 text-white py-2 px-4 sm:px-3 rounded-lg font-semibold hover:bg-gray-700 hover:scale-105 transition duration-200 shadow-neumorphic border border-white/20 backdrop-blur-sm animate-pulse-once"
-                aria-label="Cancel adding student"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleAddStudent}
-                className="flex items-center bg-gradient-to-r from-accent-teal to-cyan-500 text-white py-2 px-4 sm:px-3 rounded-lg font-semibold hover:bg-opacity-90 hover:scale-105 transition duration-200 shadow-neumorphic border border-white/20 backdrop-blur-sm animate-pulse-once"
-                aria-label="Add student"
-              >
-                Add
-              </button>
-            </div>
+            {availableStudents.length > 0 && (
+              <div className="flex justify-end gap-4 mt-6">
+                <button
+                  type="button"
+                  onClick={() => setShowAddStudentModal(false)}
+                  className="flex items-center bg-gray-600/80 text-white py-2 px-4 sm:px-3 rounded-lg font-semibold hover:bg-gray-700 hover:scale-105 transition duration-200 shadow-neumorphic border border-white/20 backdrop-blur-sm animate-pulse-once"
+                  aria-label="Cancel adding students"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleAddSelectedStudents}
+                  className="flex items-center bg-gradient-to-r from-accent-teal to-cyan-500 text-white py-2 px-4 sm:px-3 rounded-lg font-semibold hover:bg-opacity-90 hover:scale-105 transition duration-200 shadow-neumorphic border border-white/20 backdrop-blur-sm animate-pulse-once"
+                  aria-label="Add selected students"
+                >
+                  Add Selected Students
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}
