@@ -12,7 +12,6 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import {
-  projectAPI,
   projectEvaluationAPI,
   evaluationParameterAPI,
   groupAPI,
@@ -55,9 +54,8 @@ const FilterDropdown = ({
         <span>{selected || title}</span>
         <ChevronDown
           size={20}
-          className={`transform transition-transform duration-200 ${
-            isOpen ? "rotate-180" : "rotate-0"
-          } text-white`}
+          className={`transform transition-transform duration-200 ${isOpen ? "rotate-180" : "rotate-0"
+            } text-white`}
         />
       </button>
       {isOpen && (
@@ -67,11 +65,10 @@ const FilterDropdown = ({
               <li
                 key={index}
                 onClick={() => handleSelect(option)}
-                className={`px-4 py-2 cursor-pointer transition-colors duration-200 text-white ${
-                  selected === option
-                    ? "bg-accent-teal font-bold"
-                    : "hover:bg-accent-teal/30"
-                }`}
+                className={`px-4 py-2 cursor-pointer transition-colors duration-200 text-white ${selected === option
+                  ? "bg-accent-teal font-bold"
+                  : "hover:bg-accent-teal/30"
+                  }`}
               >
                 {option}
               </li>
@@ -108,7 +105,7 @@ function ProjectManagement() {
   const statusOptions = ["All", "Not Started", "In Progress", "Completed"];
   const techOptions = [
     "All",
-    ...new Set(projects.map((project) => project.technology)),
+    ...new Set(projects.map((project) => project.projectTechnology || project.technology)),
   ];
   const courseOptions = ["All", "MCA", "BCA", "B.Tech", "M.Tech"];
   const yearOptions = ["All", "2023", "2024", "2025"];
@@ -143,7 +140,8 @@ function ProjectManagement() {
     const matchesStatus =
       statusFilter === "All" || project.status === statusFilter;
     const matchesTech =
-      techFilter === "All" || project.technology === techFilter;
+      techFilter === "All" ||
+      (project.projectTechnology || project.technology) === techFilter;
     return matchesStatus && matchesTech;
   });
 
@@ -287,7 +285,12 @@ function ProjectManagement() {
 
   // Open edit modal (only for existing projects)
   const openAddEditModal = (project) => {
-    setEditProject({ ...project });
+    setEditProject({
+      ...project,
+      title: project.projectTitle || project.title || "",
+      description: project.projectDescription || project.description || "",
+      technology: project.projectTechnology || project.technology || "",
+    });
     setShowAddEditModal(true);
   };
 
@@ -309,13 +312,21 @@ function ProjectManagement() {
       return;
     }
     try {
-      await projectAPI.update(editProject._id, editProject);
+      const payload = {
+        projectTitle: editProject.title,
+        projectDescription: editProject.description,
+        projectTechnology: editProject.technology,
+        status: editProject.status,
+      };
+      await groupAPI.update(editProject._id, payload);
       setProjects(
         projects.map((p) =>
-          p._id === editProject._id ? { ...editProject } : p
+          p._id === editProject._id
+            ? { ...p, ...payload }
+            : p
         )
       );
-      setSelectedGroup(editProject);
+      setSelectedGroup((prev) => (prev && prev._id === editProject._id ? { ...prev, ...payload } : prev));
       setSuccessMessage(`Project "${editProject.title}" updated successfully!`);
       setShowAddEditModal(false);
       setTimeout(() => setSuccessMessage(""), 3000);
@@ -327,12 +338,12 @@ function ProjectManagement() {
   // Handle delete project
   const handleDeleteProject = async () => {
     try {
-      await projectAPI.delete(selectedGroup._id);
+      await groupAPI.delete(selectedGroup._id);
       setProjects(projects.filter((p) => p._id !== selectedGroup._id));
       setSelectedGroup(null);
       setShowDeleteModal(false);
       setSuccessMessage(
-        `Project "${selectedGroup.title}" deleted successfully!`
+        `Project "${selectedGroup.projectTitle || selectedGroup.title}" deleted successfully!`
       );
       setTimeout(() => setSuccessMessage(""), 3000);
     } catch (error) {
@@ -368,12 +379,12 @@ function ProjectManagement() {
           <div className="flex items-center">
             <Briefcase size={20} className="mr-3 text-white" />
             <p className="font-semibold">Title:</p>
-            <span className="ml-2">{selectedGroup.title}</span>
+            <span className="ml-2">{selectedGroup.projectTitle || selectedGroup.title}</span>
           </div>
           <div className="flex items-center">
             <Code size={20} className="mr-3 text-white" />
             <p className="font-semibold">Technology:</p>
-            <span className="ml-2">{selectedGroup.technology}</span>
+            <span className="ml-2">{selectedGroup.projectTechnology || selectedGroup.technology}</span>
           </div>
           <div className="flex items-center">
             <span className="text-white text-lg mr-3">📊</span>
@@ -387,7 +398,7 @@ function ProjectManagement() {
           </div>
           <div>
             <p className="font-semibold mb-1">Description:</p>
-            <p className="text-lg">{selectedGroup.description}</p>
+            <p className="text-lg">{selectedGroup.projectDescription || selectedGroup.description}</p>
           </div>
         </div>
         <div className="mt-8">
@@ -545,13 +556,13 @@ function ProjectManagement() {
               <div>
                 <div className="flex items-center text-xl font-bold text-white mb-2">
                   <Briefcase size={24} className="mr-3 text-white" />
-                  <span>{project.title}</span>
+                  <span>{project.projectTitle || project.title}</span>
                 </div>
                 <div className="space-y-2 text-white/90">
                   <div className="flex items-center">
                     <Code size={20} className="mr-3 text-white" />
                     <p className="font-semibold">Technology:</p>
-                    <span className="ml-2">{project.technology}</span>
+                    <span className="ml-2">{project.projectTechnology || project.technology}</span>
                   </div>
                   <div className="flex items-center">
                     <span className="text-white text-lg mr-3">📊</span>
@@ -569,8 +580,8 @@ function ProjectManagement() {
                     <CheckCircle size={20} className="mr-3 text-white" />
                     <p className="font-semibold">Marks:</p>
                     <span className="ml-2">
-                      {getTotalMarks(group._id).given}/
-                      {getTotalMarks(group._id).total}
+                      {getTotalMarks(project._id).given}/
+                      {getTotalMarks(project._id).total}
                     </span>
                   </div>
                 </div>
@@ -594,99 +605,7 @@ function ProjectManagement() {
     );
   }
 
-  return (
-    <div className="min-h-screen flex flex-col items-center bg-gray-900 font-sans">
-      {/* Success Message */}
-      {successMessage && (
-        <div className="fixed top-6 left-1/2 -translate-x-1/2 bg-white/20 backdrop-blur-md text-accent-teal font-semibold px-6 py-3 rounded-lg shadow-glow border border-white/30 z-50 animate-fade-in-down">
-          {successMessage}
-        </div>
-      )}
-
-      {selectedGroup ? renderDetailsView() : renderListView()}
-
-      {/* Edit Group Modal */}
-      {showAddEditModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white/20 backdrop-blur-md p-8 rounded-2xl shadow-glow border border-white/30 w-full max-w-md relative">
-            <button
-              onClick={() => setShowAddEditModal(false)}
-              className="absolute top-4 right-4 text-white hover:text-accent-teal transition duration-200"
-            >
-              <X size={24} className="text-white" />
-            </button>
-            <h2 className="text-2xl font-bold text-white mb-6 text-center">
-              Edit Group
-            </h2>
-            <div className="space-y-4">
-              <div>
-                <label
-                  htmlFor="title"
-                  className="block text-lg font-semibold text-white mb-2"
-                >
-                  Title
-                </label>
-                <input
-                  id="title"
-                  name="title"
-                  type="text"
-                  value={editGroup?.title || ""}
-                  onChange={handleFormChange}
-                  className="w-full p-3 bg-white/10 text-white rounded-lg border border-white/20 focus:outline-none focus:ring-2 focus:ring-accent-teal transition duration-200"
-                  placeholder="Enter group title"
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="description"
-                  className="block text-lg font-semibold text-white mb-2"
-                >
-                  Description
-                </label>
-                <textarea
-                  id="description"
-                  name="description"
-                  value={editGroup?.description || ""}
-                  onChange={handleFormChange}
-                  className="w-full p-3 bg-white/10 text-white rounded-lg border border-white/20 focus:outline-none focus:ring-2 focus:ring-accent-teal transition duration-200"
-                  placeholder="Enter group description"
-                  rows="4"
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="technology"
-                  className="block text-lg font-semibold text-white mb-2"
-                >
-                  Technology
-                </label>
-                    <p className="font-semibold">Marks:</p>
-                    <span className="ml-2">
-                      {getTotalMarks(project._id).given}/
-                      {getTotalMarks(project._id).total}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))
-        ) : (
-          <p className="text-white/70 text-center col-span-full py-8">
-            No projects found.
-          </p>
-        )}
-      </div>
-    </div>
-  );
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center text-white">
-        Loading...
-      </div>
-    );
-  }
-
+  // Remove duplicated broken JSX below; keep a single return tree
   return (
     <div className="min-h-screen flex flex-col items-center bg-gray-900 font-sans">
       {/* Success Message */}
