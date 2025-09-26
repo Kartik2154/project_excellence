@@ -2,16 +2,14 @@ import mongoose from "mongoose";
 import dotenv from "dotenv";
 
 import Guide from "./models/guide.js";
-import Division from "./models/division.js";
-import Student from "./models/student.js";
-import Enrollment from "./models/enrollment.js";
 import Group from "./models/group.js";
+import Project from "./models/project.js";
 
 dotenv.config();
 
 const connectDB = async () => {
   try {
-    await mongoose.connect(process.env.MONGODB_URI, {
+    await mongoose.connect(process.env.MONGO_URI, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
     });
@@ -25,124 +23,91 @@ const connectDB = async () => {
 const seedData = async () => {
   try {
     await Guide.deleteMany({});
-    await Division.deleteMany({});
-    await Student.deleteMany({});
-    await Enrollment.deleteMany({});
     await Group.deleteMany({});
+    await Project.deleteMany({});
 
+    // Seed minimal guides for groups
     const guides = await Guide.create([
       {
         name: "Kartik Patel",
         email: "kartik.patel@college.edu",
         expertise: "MERN Stack",
-        mobile: "9876543210",
-        status: "Active",
+        phone: "9876543210",
+        password: "password123",
+        status: "approved",
       },
       {
         name: "Kittu Sharma",
         email: "kittu.sharma@college.edu",
         expertise: "Flutter",
-        mobile: "9123456789",
-        status: "Active",
+        phone: "9123456789",
+        password: "password123",
+        status: "approved",
       },
     ]);
-    console.log("Guides inserted:", guides);
+    console.log("Guides inserted:", guides.length);
 
-    const divisions = await Division.create([
-      {
-        course: "BCA",
-        semester: 6,
-        year: 2025,
-        status: "active",
-      },
-      {
-        course: "MCA",
-        semester: 1,
-        year: 2025,
-        status: "active",
-      },
-    ]);
-    console.log("Divisions inserted:", divisions);
-
-    const students = await Student.create([
-      {
-        enrollmentNumber: "BCA2025001",
-        studentName: "Zeel Desai",
-        divisionId: divisions[0]._id,
-        isRegistered: true,
-      },
-      {
-        enrollmentNumber: "MCA2025001",
-        studentName: "Aryan Shah",
-        divisionId: divisions[1]._id,
-        isRegistered: true,
-      },
-    ]);
-    console.log("Students inserted:", students);
-
-    const enrollments = await Enrollment.create([
-      {
-        divisionId: divisions[0]._id,
-        enrollmentNumber: "BCA2025001",
-        isRegistered: true,
-        studentName: "Zeel Desai",
-      },
-      {
-        divisionId: divisions[1]._id,
-        enrollmentNumber: "MCA2025001",
-        isRegistered: true,
-        studentName: "Aryan Shah",
-      },
-    ]);
-    console.log("Enrollments inserted:", enrollments);
-
+    // Seed minimal groups for projects
     const groups = await Group.create([
       {
-        name: "Alpha Team",
+        name: "Group A",
         guide: guides[0]._id,
-        projectTitle: "E-commerce Platform",
-        projectDescription:
-          "A web-based platform for online shopping with secure payment gateways.",
+        projectTitle: "E-Commerce Platform",
+        projectDescription: "A full-stack e-commerce platform with MERN stack",
         projectTechnology: "MERN Stack",
         year: 2025,
         members: [
           {
-            name: "Zeel Desai",
-            enrollment: "BCA2025001",
-            className: "BCA 6",
+            name: "Student 1",
+            enrollment: "ENR001",
+            className: "MCA Sem-3",
           },
           {
-            name: "Sanjay Patel",
-            enrollment: "BCA2025002",
-            className: "BCA 6",
+            name: "Student 2",
+            enrollment: "ENR002",
+            className: "MCA Sem-3",
           },
         ],
         status: "active",
       },
       {
-        name: "Beta Squad",
+        name: "Group B",
         guide: guides[1]._id,
-        projectTitle: "Real-time Chat App",
+        projectTitle: "Mobile Task Manager",
         projectDescription:
-          "A real-time messaging application for secure communication.",
+          "A Flutter-based mobile application for task management",
         projectTechnology: "Flutter",
         year: 2025,
         members: [
           {
-            name: "Aryan Shah",
-            enrollment: "MCA2025001",
-            className: "MCA 1",
-          },
-          {
-            name: "Kittu Shah",
-            enrollment: "MCA2025002",
-            className: "MCA 1",
+            name: "Student 3",
+            enrollment: "ENR003",
+            className: "BCA Sem-6",
           },
         ],
         status: "active",
       },
     ]);
-    console.log("Groups inserted:", groups);
+    console.log("Groups inserted:", groups.length);
+
+    // Seed projects
+    const projects = await Project.create([
+      {
+        title: "E-Commerce Platform",
+        description: "A full-stack e-commerce platform with MERN stack",
+        technology: "MERN Stack",
+        status: "In Progress",
+        groupId: groups[0]._id,
+      },
+      {
+        title: "Mobile Task Manager",
+        description: "A Flutter-based mobile application for task management",
+        technology: "Flutter",
+        status: "Completed",
+        groupId: groups[1]._id,
+      },
+    ]);
+    console.log("Projects inserted:", projects.length);
 
     console.log("Data seeding completed successfully!");
   } catch (error) {

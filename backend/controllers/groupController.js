@@ -10,7 +10,7 @@ export const getAllGroups = async (req, res) => {
     const { course, year, guide } = req.query;
     let filter = {};
 
-    if (course) filter["members.className"] = new RegExp(course, "i");
+    if (course) filter["members.className"] = new RegExp(`^${course}`, "i");
     if (year) filter.year = year;
     if (guide) filter.guide = guide;
 

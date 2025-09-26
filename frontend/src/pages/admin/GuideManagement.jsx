@@ -53,10 +53,11 @@ function GuideManagement() {
   const [showAddGuideModal, setShowAddGuideModal] = useState(false);
   const [showEditGuideModal, setShowEditGuideModal] = useState(false);
   const [showRequestsModal, setShowRequestsModal] = useState(false);
-  const [showGroupsModal, setShowGroupsModal] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
   const [pdfBlob, setPdfBlob] = useState(null);
   const [pdfUrl, setPdfUrl] = useState("");
+  const [showGroupsModal, setShowGroupsModal] = useState(false);
+  const [selectedGuideGroups, setSelectedGuideGroups] = useState([]);
   const [newGuide, setNewGuide] = useState({
     name: "",
     expertise: "",
@@ -72,7 +73,6 @@ function GuideManagement() {
     phone: "",
     isActive: false,
   });
-  const [selectedGuideGroups, setSelectedGuideGroups] = useState([]);
 
   const availableExpertise = [
     "MERN Stack",
@@ -123,7 +123,7 @@ function GuideManagement() {
 
   const filteredGuides = guides.filter(
     (guide) =>
-      guide.status !== "pending" &&
+      guide.status === "approved" &&
       guide.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -169,15 +169,9 @@ function GuideManagement() {
     setShowRequestsModal(true);
   };
 
-  const handleViewGroups = (guideId) => {
-    const guideGroups = groups.filter((group) => group.guideId === guideId);
-    setSelectedGuideGroups(guideGroups);
-    setShowGroupsModal(true);
-  };
-
   const handleAcceptRequest = async (id) => {
     try {
-      await guideAPI.updateStatus(id, { status: "approved" });
+      await guideAPI.updateStatus(id, "approved");
       toast.success("Guide approved successfully!");
       fetchGuides();
     } catch (err) {
@@ -187,7 +181,7 @@ function GuideManagement() {
 
   const handleRejectRequest = async (id) => {
     try {
-      await guideAPI.updateStatus(id, { status: "rejected" });
+      await guideAPI.updateStatus(id, "rejected");
       toast.success("Guide rejected.");
       fetchGuides();
     } catch (err) {
@@ -367,6 +361,14 @@ function GuideManagement() {
       setShowShareModal(false);
       URL.revokeObjectURL(pdfUrl);
     }
+  };
+
+  const handleViewGroups = (guide) => {
+    const groupsForGuide = groups.filter(
+      (group) => group.guideId === guide._id
+    );
+    setSelectedGuideGroups(groupsForGuide);
+    setShowGroupsModal(true);
   };
 
   return (
@@ -570,6 +572,16 @@ function GuideManagement() {
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                          <button
+                            onClick={() => handleViewGroups(guide)}
+                            onKeyDown={(e) =>
+                              e.key === "Enter" && handleViewGroups(guide)
+                            }
+                            className="text-blue-400 hover:text-blue-300 mr-3"
+                            aria-label={`View groups for ${guide.name}`}
+                          >
+                            <Users size={20} />
+                          </button>
                           <button
                             onClick={() => handleEditGuide(guide)}
                             onKeyDown={(e) =>

@@ -1,19 +1,24 @@
-# TODO: Implement APIs for Manage Divisions Page
+# TODO: Remove Project Table Code and Use Group Table API
 
-## Backend Implementation
+## Backend Changes
 
-- [x] Update divisionController.js: getAll with filters, create, updateStatus, delete
-- [x] Update enrollmentController.js: getByDivision, create, generate, delete, deleteAllByDivision
-- [x] Update divisionRoutes.js: add POST, PATCH, DELETE routes
-- [x] Update enrollmentRoutes.js: add GET by division, POST, POST generate, DELETE routes
+- [x] Remove backend/controllers/projectController.js
+- [x] Remove backend/routes/projectRoutes.js
+- [x] Update backend/index.js: Remove import and use of projectRoutes
 
-## Frontend Implementation
+## Frontend Changes
 
-- [x] Update api.js: add divisionAPI and enrollmentAPI methods
+- [x] Update frontend/src/services/api.js: Remove projectAPI export
+- [ ] Update frontend/src/pages/admin/ProjectManagement.jsx:
+  - Change state from 'projects' to 'groups'
+  - Replace projectAPI.update/delete with groupAPI.update/delete
+  - Update edit modal fields: name="title" -> name="projectTitle", etc., remove groupId select
+  - Update display logic: use group.projectTitle, group.projectDescription, etc.
+  - Change page titles to "Manage Group Projects"
+  - Update filters and mappings (e.g., technology -> projectTechnology)
+  - Remove unused [groups] state
 
-## Next Steps
+## Testing
 
-- [ ] Integrate APIs into ManageDivisions.jsx component (replace mock data with API calls)
-- [ ] Test the APIs with the frontend
-- [ ] Handle any validation errors or edge cases
-- [ ] Ensure status capitalization is consistent
+- [ ] Run backend to ensure no errors
+- [ ] Test frontend ProjectManagement page: load groups, edit, delete

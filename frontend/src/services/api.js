@@ -69,4 +69,51 @@ export const enrollmentAPI = {
     api.delete(`/enrollments/division/${divisionId}`),
 };
 
+// ✅ Evaluation Parameters API
+export const evaluationParameterAPI = {
+  getAll: () => api.get("/evaluation-parameters"),
+  create: (payload) => api.post("/evaluation-parameters", payload),
+  update: (id, payload) => api.put(`/evaluation-parameters/${id}`, payload),
+  delete: (id) => api.delete(`/evaluation-parameters/${id}`),
+};
+
+// ✅ Admin API
+export const adminAPI = {
+  getProfile: () => api.get("/admin/profile"),
+  updateProfile: (payload) => api.put("/admin/profile", payload),
+  changePassword: (payload) => api.post("/admin/change-password", payload),
+};
+
+// ✅ Exam Schedules API
+export const examScheduleAPI = {
+  getAll: (params) => api.get("/exam-schedules", { params }),
+  create: (payload) => api.post("/exam-schedules", payload),
+  update: (id, payload) => api.put(`/exam-schedules/${id}`, payload),
+  delete: (id) => api.delete(`/exam-schedules/${id}`),
+};
+
+// ✅ Course Announcements API
+export const courseAnnouncementAPI = {
+  getAll: () => api.get("/course-announcements"),
+  create: (payload) => api.post("/course-announcements", payload),
+  update: (id, payload) => api.put(`/course-announcements/${id}`, payload),
+  delete: (id) => api.delete(`/course-announcements/${id}`),
+};
+
+// ✅ Project Evaluations API
+export const projectEvaluationAPI = {
+  getAll: () => api.get("/project-evaluations"),
+  getByProject: (projectId) => api.get(`/project-evaluations/${projectId}`),
+  update: (projectId, parameterId, payload) =>
+    api.put(`/project-evaluations/${projectId}/${parameterId}`, payload),
+};
+
+// ✅ Guide Announcements API
+export const guideAnnouncementAPI = {
+  getAll: () => api.get("/guide-announcements"),
+  create: (payload) => api.post("/guide-announcements", payload),
+  update: (id, payload) => api.put(`/guide-announcements/${id}`, payload),
+  delete: (id) => api.delete(`/guide-announcements/${id}`),
+};
+
 export default api;
