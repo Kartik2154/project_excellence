@@ -5,7 +5,7 @@ const divisionSchema = new mongoose.Schema(
     course: {
       type: String,
       required: true,
-      enum: ["BCA", "MCA", "BBA", "MBA"],
+      enum: ["BCA", "MCA", "BBA", "MBA", "MSCIT"],
       trim: true,
     },
     semester: {

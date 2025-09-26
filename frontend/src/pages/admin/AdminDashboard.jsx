@@ -8,40 +8,22 @@ import {
   SlidersHorizontal,
   Settings,
   LogOut,
-  Key,
   LayoutGrid,
+  User,
 } from "lucide-react";
-
-// Import your page components
-import PasswordManager from "../../components/PasswordManager";
+import AdminSettings from "./AdminSettings";
 import GuideManagement from "./GuideManagement";
 import GroupManagement from "./GroupManagement";
+import ManageDivisions from "./ManageDivisions";
+import EvaluationParameters from "./EvaluationParameters";
+import ExamScheduleManagement from "./ExamScheduleManagement";
+import ProjectManagement from "./ProjectManagement";
 
-// Dummy page components (replace with real ones later)
+// Placeholder components for future implementation
 const ProjectsPage = () => (
   <div className="p-6 text-white">
     <h2 className="text-3xl font-bold mb-4">💼 Manage Projects</h2>
     <p>This is the page for overseeing project assignments and submissions.</p>
-  </div>
-);
-const SchedulesPage = () => (
-  <div className="p-6 text-white">
-    <h2 className="text-3xl font-bold mb-4">🗓️ Exam Schedules</h2>
-    <p>This is the page for creating and managing exam schedules.</p>
-  </div>
-);
-const DivisionsPage = () => (
-  <div className="p-6 text-white">
-    <h2 className="text-3xl font-bold mb-4">🏫 Manage Divisions</h2>
-    <p>
-      This is the page for managing college divisions and student enrollments.
-    </p>
-  </div>
-);
-const EvaluationPage = () => (
-  <div className="p-6 text-white">
-    <h2 className="text-3xl font-bold mb-4">📊 Evaluation Parameters</h2>
-    <p>This is the page for defining project evaluation criteria.</p>
   </div>
 );
 
@@ -103,7 +85,6 @@ function Dashboard() {
   const settingsMenuRef = useRef(null);
   const settingsIconRef = useRef(null);
 
-  // Close settings dropdown when clicking outside
   useEffect(() => {
     function handleClickOutside(event) {
       if (
@@ -194,6 +175,10 @@ function Dashboard() {
             from { opacity: 0; transform: scale(0.95); }
             to { opacity: 1; transform: scale(1); }
           }
+          @keyframes fade-in-down {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+          }
           .animate-fade-in-up {
             animation: fade-in-up 0.6s ease-out;
           }
@@ -202,6 +187,12 @@ function Dashboard() {
           }
           .animate-icon-pulse {
             animation: icon-pulse 2s infinite ease-in-out;
+          }
+          .animate-fade-in-down {
+            animation: fade-in-down 0.5s ease-out;
+          }
+          .shadow-glow {
+            box-shadow: 0 0 10px rgba(0, 184, 212, 0.5);
           }
           .bg-particles {
             position: absolute;
@@ -216,7 +207,6 @@ function Dashboard() {
       </style>
       <div className="bg-particles" />
 
-      {/* Topbar */}
       <header className="w-full bg-white/10 backdrop-blur-sm border-b border-white/30 shadow-lg z-10 py-3 sm:py-4">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between">
           <h1 className="text-2xl sm:text-3xl font-extrabold text-white drop-shadow-lg">
@@ -235,26 +225,25 @@ function Dashboard() {
             />
             {isSettingsMenuOpen && (
               <div
-                className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm flex justify-end p-4 sm:p-6"
-                onClick={() => setIsSettingsMenuOpen(false)}
+                className="absolute right-0 mt-3 w-48 z-50"
+                onClick={(e) => e.stopPropagation()}
               >
                 <div
                   ref={settingsMenuRef}
-                  className="bg-white/20 backdrop-blur-xl rounded-xl shadow-lg border border-white/30 overflow-hidden animate-fade-in transform scale-100 transition duration-200"
-                  onClick={(e) => e.stopPropagation()}
+                  className="bg-white/20 backdrop-blur-xl rounded-xl shadow-2xl border border-white/30 overflow-hidden animate-fade-in transform scale-100 transition duration-200"
                 >
                   <ul className="py-2">
                     <li>
                       <button
                         onClick={() => {
-                          navigate("/admin/dashboard/manage-password");
+                          navigate("/admin/dashboard/settings");
                           setIsSettingsMenuOpen(false);
                         }}
                         className="flex items-center w-full px-4 py-2 text-white hover:bg-cyan-400/50 transition duration-150 font-semibold"
-                        aria-label="Change Password"
+                        aria-label="Manage Settings"
                       >
-                        <Key size={20} className="mr-3 text-cyan-400" /> Change
-                        Password
+                        <User size={20} className="mr-3 text-cyan-400" /> Manage
+                        Settings
                       </button>
                     </li>
                     <li>
@@ -275,7 +264,6 @@ function Dashboard() {
         </div>
       </header>
 
-      {/* Page Content */}
       <main className="flex-1 overflow-y-auto p-6">
         <Routes>
           <Route
@@ -284,14 +272,11 @@ function Dashboard() {
           />
           <Route path="guides" element={<GuideManagement />} />
           <Route path="groups" element={<GroupManagement />} />
-          <Route path="projects" element={<ProjectsPage />} />
-          <Route path="schedules" element={<SchedulesPage />} />
-          <Route path="divisions" element={<DivisionsPage />} />
-          <Route path="evaluation" element={<EvaluationPage />} />
-          <Route
-            path="manage-password"
-            element={<PasswordManager role="admin" />}
-          />
+          <Route path="projects" element={<ProjectManagement />} />
+          <Route path="schedules" element={<ExamScheduleManagement />} />
+          <Route path="divisions" element={<ManageDivisions />} />
+          <Route path="evaluation" element={<EvaluationParameters />} />
+          <Route path="settings" element={<AdminSettings />} />
         </Routes>
       </main>
     </div>

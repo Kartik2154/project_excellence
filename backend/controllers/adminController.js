@@ -108,19 +108,70 @@ export const resetPassword = async (req, res) => {
   }
 };
 
+// ✅ Get Admin Profile
+export const getAdminProfile = async (req, res) => {
+  try {
+    const admin = await Admin.findById(req.admin.id).select(
+      "-password -otp -otpExpiry"
+    );
+    if (!admin) {
+      return res.status(404).json({ message: "Admin not found" });
+    }
+    res.json(admin);
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// ✅ Update Admin Profile
+export const updateAdminProfile = async (req, res) => {
+  try {
+    const { name, email } = req.body;
+
+    // Check if email is already taken by another admin
+    if (email) {
+      const existingAdmin = await Admin.findOne({
+        email,
+        _id: { $ne: req.admin.id },
+      });
+      if (existingAdmin) {
+        return res.status(400).json({ message: "Email already in use" });
+      }
+    }
+
+    const admin = await Admin.findById(req.admin.id);
+    if (!admin) {
+      return res.status(404).json({ message: "Admin not found" });
+    }
+
+    if (name) admin.name = name;
+    if (email) admin.email = email;
+
+    await admin.save();
+
+    res.json({
+      _id: admin._id,
+      name: admin.name,
+      email: admin.email,
+      message: "Profile updated successfully",
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
 // ✅ Change Password (while logged in)
 export const changePassword = async (req, res) => {
   try {
-    const { email, oldPassword, newPassword } = req.body;
-    const admin = await Admin.findOne({ email });
+    const { oldPassword, newPassword } = req.body;
+    const admin = await Admin.findById(req.admin.id);
 
     if (!admin) return res.status(404).json({ message: "Admin not found" });
 
-    const isMatch = await bcrypt.compare(oldPassword, admin.password);
+    const isMatch = await admin.matchPassword(oldPassword);
     if (!isMatch)
       return res.status(400).json({ message: "Incorrect old password" });
 
-    // const hashed = await bcrypt.hash(newPassword, 10);
     admin.password = newPassword;
     await admin.save();
 

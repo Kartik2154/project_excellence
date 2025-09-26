@@ -9,6 +9,11 @@ import groupRoutes from "./routes/groupRoutes.js";
 import studentRoutes from "./routes/studentRoutes.js";
 import divisionRoutes from "./routes/divisionRoutes.js";
 import enrollmentRoutes from "./routes/enrollmentRoutes.js";
+import evaluationParameterRoutes from "./routes/evaluationParameterRoutes.js";
+import projectEvaluationRoutes from "./routes/projectEvaluationRoutes.js";
+import examScheduleRoutes from "./routes/examScheduleRoutes.js";
+import courseAnnouncementRoutes from "./routes/courseAnnouncementRoutes.js";
+import guideAnnouncementRoutes from "./routes/guideAnnouncementRoutes.js";
 
 dotenv.config();
 connectDB();
@@ -32,6 +37,11 @@ app.use("/api/groups", groupRoutes);
 app.use("/api/students", studentRoutes);
 app.use("/api/divisions", divisionRoutes);
 app.use("/api/enrollments", enrollmentRoutes);
+app.use("/api/evaluation-parameters", evaluationParameterRoutes);
+app.use("/api/project-evaluations", projectEvaluationRoutes);
+app.use("/api/exam-schedules", examScheduleRoutes);
+app.use("/api/course-announcements", courseAnnouncementRoutes);
+app.use("/api/guide-announcements", guideAnnouncementRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

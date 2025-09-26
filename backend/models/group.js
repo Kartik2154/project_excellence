@@ -56,8 +56,8 @@ const groupSchema = new mongoose.Schema(
     members: [memberSchema],
     status: {
       type: String,
-      enum: ["active", "completed", "cancelled"],
-      default: "active",
+      enum: ["Not Started", "In Progress", "Completed"],
+      default: "Not Started",
     },
   },
   { timestamps: true }

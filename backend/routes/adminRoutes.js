@@ -6,7 +6,10 @@ import {
   forgotPassword,
   resetPassword,
   changePassword,
+  getAdminProfile,
+  updateAdminProfile,
 } from "../controllers/adminController.js";
+import { protectAdmin } from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
 
@@ -19,6 +22,15 @@ router.post("/register", registerAdmin);
 // Forgot + Reset
 router.post("/forgot-password", forgotPassword);
 router.post("/reset-password", resetPassword);
+
+// Protected routes (require authentication)
+router.use(protectAdmin);
+
+// GET /api/admin/profile
+router.get("/profile", getAdminProfile);
+
+// PUT /api/admin/profile
+router.put("/profile", updateAdminProfile);
 
 // Change password
 router.post("/change-password", changePassword);
