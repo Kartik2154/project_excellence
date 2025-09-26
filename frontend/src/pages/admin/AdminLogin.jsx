@@ -27,19 +27,28 @@ function AdminLogin() {
     setLoading(true);
     setError("");
 
-    if (!formData.email || !formData.password) {
+    const email = (formData.email || "").trim().toLowerCase();
+    const password = (formData.password || "").trim();
+
+    if (!email || !password) {
       setError("Please fill in all fields");
       setLoading(false);
       return;
     }
 
     try {
-      const response = await authAPI.login(formData);
-      localStorage.setItem("token", response.token);
-      localStorage.setItem("user", JSON.stringify(response.data));
+      const response = await authAPI.login({ email, password });
+      // token is already persisted by authAPI; normalize user storage in case backend returns only _id/email
+      if (response) {
+        const userPayload = response.data || { _id: response._id, email: response.email };
+        if (userPayload) {
+          localStorage.setItem("user", JSON.stringify(userPayload));
+        }
+      }
       navigate("/admin/dashboard"); // <— admin-only for now
     } catch (err) {
-      setError(err.message || "Login failed. Please try again.");
+      const msg = err?.response?.data?.message || err?.message || "Login failed. Please try again.";
+      setError(msg);
       console.error("Login error:", err);
     } finally {
       setLoading(false);
