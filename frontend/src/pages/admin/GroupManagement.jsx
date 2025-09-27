@@ -193,52 +193,23 @@ function GroupManagement() {
       const groupSemester = parseInt(classNameParts[1], 10);
       const groupYear = selectedGroup.year;
 
-      // Fetch divisions to find matching division
-      const divisionsResponse = await axios.get(`${API_BASE_URL}/divisions`, {
-        headers,
-      });
-      const divisions = divisionsResponse.data;
-      const matchingDivision = divisions.find(
-        (d) =>
-          d.course === groupCourse &&
-          d.semester === groupSemester &&
-          d.year === groupYear
-      );
-      if (!matchingDivision) return [];
-
-      // Fetch enrollments for the division
-      const enrollmentsResponse = await axios.get(
-        `${API_BASE_URL}/enrollments/division/${matchingDivision._id}`,
-        { headers }
-      );
-      const enrollments = enrollmentsResponse.data;
-
-      // Fetch all groups to get assigned enrollments
-      const groupsResponse = await axios.get(`${API_BASE_URL}/groups`, {
-        headers,
-      });
-      const allGroups = groupsResponse.data;
-      const assignedEnrollments = allGroups.flatMap((g) =>
-        g.members.map((m) => m.enrollmentNumber)
-      );
-      const currentGroupEnrollments = selectedGroup.members.map(
-        (m) => m.enrollmentNumber
+      // Use backend API to get available students
+      const response = await axios.get(
+        `${API_BASE_URL}/groups/${selectedGroup._id}/students/available`,
+        {
+          headers,
+          params: {
+            course: groupCourse,
+            semester: groupSemester,
+            year: groupYear,
+          },
+        }
       );
 
-      const available = enrollments.filter(
-        (e) =>
-          e.isRegistered &&
-          !assignedEnrollments.includes(e.enrollmentNumber) &&
-          !currentGroupEnrollments.includes(e.enrollmentNumber)
-      );
-
-      return available.map((e) => ({
-        _id: e._id,
-        enrollmentNumber: e.enrollmentNumber,
-        name: e.studentName || e.enrollmentNumber,
-        className: `${groupCourse} ${groupSemester}`,
-        divisionId: e.divisionId,
-        isRegistered: e.isRegistered,
+      return response.data.map((student) => ({
+        enrollmentNumber: student.enrollmentNumber,
+        name: student.name,
+        className: student.className,
       }));
     } catch (error) {
       console.error("Error fetching available students:", error);

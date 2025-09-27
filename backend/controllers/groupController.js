@@ -158,51 +158,30 @@ export const deleteGroup = async (req, res) => {
 export const getAvailableStudents = async (req, res) => {
   try {
     const { id } = req.params;
-    const { course, semester, year } = req.query;
 
-    if (!course || !semester || !year) {
-      return res.status(400).json({
-        message: "Course, semester, and year parameters are required",
-      });
-    }
-
-    const group = await Group.findById(id);
+    const group = await Group.findById(id).populate("members", "divisionId");
 
     if (!group) {
       return res.status(404).json({ message: "Group not found" });
     }
 
-    const numericSemester = parseInt(semester, 10);
-    const numericYear = parseInt(year, 10);
-
-    // Find active divisions matching the course, semester, and year
-    const divisions = await Division.find({
-      course: { $regex: new RegExp(`^${course}`, "i") }, // Case-insensitive partial match
-      semester: numericSemester,
-      year: numericYear,
-      status: "active",
-    });
-
-    if (divisions.length === 0) {
-      console.log(
-        `No divisions found for course: ${course}, semester: ${numericSemester}, year: ${numericYear}`
-      );
-      return res.status(404).json({ message: "No matching divisions found" });
+    // If no members in group, no division to match, return empty
+    if (group.members.length === 0) {
+      return res.json([]);
     }
 
-    const divisionIds = divisions.map((d) => d._id);
+    // Assume all members are from the same division, take from first member
+    const divisionId = group.members[0].divisionId;
 
-    // Get all enrolled students in these divisions who are registered
+    // Get all enrolled students in this division who are registered
     const enrollments = await Enrollment.find({
-      divisionId: { $in: divisionIds },
+      divisionId: divisionId,
       isRegistered: true,
-    });
+    }).populate("divisionId", "course semester year");
 
     if (enrollments.length === 0) {
-      console.log(`No enrollments found for division IDs: ${divisionIds}`);
-      return res
-        .status(404)
-        .json({ message: "No students enrolled in matching divisions" });
+      console.log(`No enrollments found for division ID: ${divisionId}`);
+      return res.json([]);
     }
 
     // Get all existing groups to find assigned enrollments
@@ -225,9 +204,10 @@ export const getAvailableStudents = async (req, res) => {
           !currentGroupEnrollments.includes(e.enrollmentNumber)
       )
       .map((e) => ({
+        _id: e._id,
         enrollmentNumber: e.enrollmentNumber,
         name: e.studentName || "Unknown Student",
-        className: `${course} ${numericSemester}`,
+        className: `${e.divisionId.course} ${e.divisionId.semester}`,
       }));
 
     console.log(
