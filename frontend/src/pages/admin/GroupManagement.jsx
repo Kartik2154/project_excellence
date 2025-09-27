@@ -193,18 +193,53 @@ function GroupManagement() {
       const groupSemester = parseInt(classNameParts[1], 10);
       const groupYear = selectedGroup.year;
 
-      const response = await axios.get(
-        `${API_BASE_URL}/groups/${selectedGroup._id}/students/available`,
-        {
-          headers,
-          params: {
-            course: groupCourse,
-            semester: groupSemester,
-            year: groupYear,
-          },
-        }
+      // Fetch divisions to find matching division
+      const divisionsResponse = await axios.get(`${API_BASE_URL}/divisions`, {
+        headers,
+      });
+      const divisions = divisionsResponse.data;
+      const matchingDivision = divisions.find(
+        (d) =>
+          d.course === groupCourse &&
+          d.semester === groupSemester &&
+          d.year === groupYear
       );
-      return response.data;
+      if (!matchingDivision) return [];
+
+      // Fetch enrollments for the division
+      const enrollmentsResponse = await axios.get(
+        `${API_BASE_URL}/enrollments/division/${matchingDivision._id}`,
+        { headers }
+      );
+      const enrollments = enrollmentsResponse.data;
+
+      // Fetch all groups to get assigned enrollments
+      const groupsResponse = await axios.get(`${API_BASE_URL}/groups`, {
+        headers,
+      });
+      const allGroups = groupsResponse.data;
+      const assignedEnrollments = allGroups.flatMap((g) =>
+        g.members.map((m) => m.enrollmentNumber)
+      );
+      const currentGroupEnrollments = selectedGroup.members.map(
+        (m) => m.enrollmentNumber
+      );
+
+      const available = enrollments.filter(
+        (e) =>
+          e.isRegistered &&
+          !assignedEnrollments.includes(e.enrollmentNumber) &&
+          !currentGroupEnrollments.includes(e.enrollmentNumber)
+      );
+
+      return available.map((e) => ({
+        _id: e._id,
+        enrollmentNumber: e.enrollmentNumber,
+        name: e.studentName || e.enrollmentNumber,
+        className: `${groupCourse} ${groupSemester}`,
+        divisionId: e.divisionId,
+        isRegistered: e.isRegistered,
+      }));
     } catch (error) {
       console.error("Error fetching available students:", error);
       return [];
@@ -309,7 +344,7 @@ function GroupManagement() {
     try {
       const headers = { Authorization: `Bearer ${adminToken}` };
       const updatedMembers = selectedGroup.members.filter(
-        (m) => m.enrollment !== studentToDelete.enrollment
+        (m) => m.enrollmentNumber !== studentToDelete.enrollmentNumber
       );
       await axios.put(
         `${API_BASE_URL}/groups/${selectedGroup._id}`,
@@ -326,7 +361,7 @@ function GroupManagement() {
       setSelectedGroup((prev) => ({ ...prev, members: updatedMembers }));
       setShowDeleteStudentModal(false);
       setSuccessMessage(
-        `Student ${studentToDelete.name} removed from ${selectedGroup.name}!`
+        `Student ${studentToDelete.studentName} removed from ${selectedGroup.name}!`
       );
       setTimeout(() => setSuccessMessage(""), 3000);
     } catch (error) {
@@ -464,7 +499,9 @@ function GroupManagement() {
                 />
                 <p className="font-semibold">Course:</p>
                 <span className="ml-2">
-                  {selectedGroup.members[0]?.className}
+                  {selectedGroup.members[0]?.divisionId
+                    ? `${selectedGroup.members[0].divisionId.course} ${selectedGroup.members[0].divisionId.semester}`
+                    : "N/A"}
                 </span>
               </div>
               <div className="flex items-center">
@@ -560,12 +597,16 @@ function GroupManagement() {
                   />
                   <div className="flex flex-col">
                     <span className="font-semibold text-lg text-white">
-                      {member.name}
+                      {member.studentName}
                     </span>
                     <div className="text-sm text-white/80 flex items-center">
                       <Hash size={16} className="mr-1 text-accent-teal" />
-                      <span>{member.enrollment}</span>
-                      <span className="ml-4">{member.className}</span>
+                      <span>{member.enrollmentNumber}</span>
+                      <span className="ml-4">
+                        {member.divisionId
+                          ? `${member.divisionId.course} ${member.divisionId.semester}`
+                          : "N/A"}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -575,7 +616,7 @@ function GroupManagement() {
                     setShowDeleteStudentModal(true);
                   }}
                   className="text-red-400 hover:text-red-300 transition-colors duration-200"
-                  aria-label={`Remove student ${member.name}`}
+                  aria-label={`Remove student ${member.studentName}`}
                 >
                   <Trash2 size={24} className="animate-icon-pulse" />
                 </button>
@@ -876,7 +917,7 @@ function GroupManagement() {
             <p className="text-white/80 text-center mb-6">
               Are you sure you want to remove{" "}
               <span className="font-semibold text-accent-teal">
-                {studentToDelete.name}
+                {studentToDelete.studentName}
               </span>{" "}
               from{" "}
               <span className="font-semibold text-accent-teal">

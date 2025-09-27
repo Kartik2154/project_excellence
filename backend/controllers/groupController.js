@@ -1,6 +1,5 @@
 import Group from "../models/group.js";
 import Guide from "../models/guide.js";
-import Student from "../models/student.js";
 import Division from "../models/division.js";
 import Enrollment from "../models/enrollment.js";
 
@@ -10,7 +9,7 @@ export const getAllGroups = async (req, res) => {
     const { course, year, guide } = req.query;
     let filter = {};
 
-    if (course) filter["members.className"] = new RegExp(`^${course}`, "i");
+    // Note: course filter removed as members are now refs, need aggregation for complex filter
     if (year) filter.year = year;
     if (guide) filter.guide = guide;
 
@@ -30,7 +29,8 @@ export const getGroupById = async (req, res) => {
     const { id } = req.params;
     const group = await Group.findById(id)
       .populate("guide", "name email expertise mobile")
-      .populate("members", "enrollmentNumber studentName divisionId");
+      .populate("members", "enrollmentNumber studentName divisionId")
+      .populate("members.divisionId", "course semester year");
 
     if (!group) {
       return res.status(404).json({ message: "Group not found" });
@@ -206,13 +206,18 @@ export const getAvailableStudents = async (req, res) => {
     }
 
     // Get all existing groups to find assigned enrollments
-    const allGroups = await Group.find({});
+    const allGroups = await Group.find({}).populate(
+      "members",
+      "enrollmentNumber"
+    );
     const assignedEnrollments = allGroups.flatMap((g) =>
-      g.members.map((m) => m.enrollment)
+      g.members.map((m) => m.enrollmentNumber)
     );
 
     // Filter out students already in any group, and exclude current group's members specifically
-    const currentGroupEnrollments = group.members.map((m) => m.enrollment);
+    const currentGroupEnrollments = group.members.map(
+      (m) => m.enrollmentNumber
+    );
     const availableStudents = enrollments
       .filter(
         (e) =>
