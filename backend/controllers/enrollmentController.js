@@ -56,12 +56,10 @@ export const createEnrollment = async (req, res) => {
     }
 
     if (!/^[A-Za-z]+\d{7}$/.test(enrollmentNumber)) {
-      return res
-        .status(400)
-        .json({
-          message:
-            "Enrollment number must be like BCA2025001 (letters followed by 7 digits)",
-        });
+      return res.status(400).json({
+        message:
+          "Enrollment number must be like BCA2025001 (letters followed by 7 digits)",
+      });
     }
 
     // Check if enrollment already exists
@@ -103,12 +101,10 @@ export const generateEnrollments = async (req, res) => {
     const endNum = parseInt(end);
 
     if (startNum < 1 || endNum < startNum || endNum > 999) {
-      return res
-        .status(400)
-        .json({
-          message:
-            "Invalid range! Start must be >= 1, end must be > start and <= 999.",
-        });
+      return res.status(400).json({
+        message:
+          "Invalid range! Start must be >= 1, end must be > start and <= 999.",
+      });
     }
 
     const division = await Division.findById(divisionId);
@@ -133,12 +129,10 @@ export const generateEnrollments = async (req, res) => {
     }
 
     if (newEnrollments.length === 0) {
-      return res
-        .status(400)
-        .json({
-          message:
-            "No new enrollments generated! All numbers in range already exist.",
-        });
+      return res.status(400).json({
+        message:
+          "No new enrollments generated! All numbers in range already exist.",
+      });
     }
 
     const savedEnrollments = await Enrollment.insertMany(newEnrollments);
