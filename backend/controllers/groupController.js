@@ -121,7 +121,45 @@ export const updateGroup = async (req, res) => {
       if (members.length < 3 || members.length > 4) {
         return res.status(400).json({ message: "Group must have 3-4 members" });
       }
-      updateData.members = members;
+
+      // Resolve members to Enrollment _ids
+      const resolvedMembers = [];
+      for (const member of members) {
+        let enrollmentId;
+        if (typeof member === "string") {
+          // Assume it's already an _id
+          enrollmentId = member;
+        } else if (member.enrollment || member.enrollmentNumber) {
+          // Find by enrollmentNumber
+          const enrollmentNum = member.enrollment || member.enrollmentNumber;
+          const enrollment = await Enrollment.findOne({
+            enrollmentNumber: enrollmentNum,
+          });
+          if (!enrollment) {
+            return res
+              .status(400)
+              .json({ message: `Enrollment ${enrollmentNum} not found` });
+          }
+          if (!enrollment.isRegistered) {
+            return res.status(400).json({
+              message: `Student ${enrollmentNum} is not registered`,
+            });
+          }
+          enrollmentId = enrollment._id;
+        } else {
+          return res.status(400).json({ message: "Invalid member format" });
+        }
+        resolvedMembers.push(enrollmentId);
+      }
+
+      // Check for duplicates
+      if (new Set(resolvedMembers).size !== resolvedMembers.length) {
+        return res
+          .status(400)
+          .json({ message: "Duplicate members not allowed" });
+      }
+
+      updateData.members = resolvedMembers;
     }
 
     const updatedGroup = await Group.findByIdAndUpdate(id, updateData, {
@@ -158,29 +196,41 @@ export const deleteGroup = async (req, res) => {
 export const getAvailableStudents = async (req, res) => {
   try {
     const { id } = req.params;
+    const { course, year, semester } = req.query;
 
-    const group = await Group.findById(id).populate("members", "divisionId");
+    const group = await Group.findById(id).populate(
+      "members",
+      "enrollmentNumber divisionId"
+    );
 
     if (!group) {
       return res.status(404).json({ message: "Group not found" });
     }
 
-    // If no members in group, no division to match, return empty
-    if (group.members.length === 0) {
+    // Build filter for divisions based on query params
+    let divisionFilter = {};
+    if (course) divisionFilter.course = course;
+    if (year) divisionFilter.year = parseInt(year);
+    // Note: Not filtering by semester to allow students from all semesters in the same course and year
+
+    // Get divisions matching the filter
+    const divisions = await Division.find(divisionFilter);
+    if (divisions.length === 0) {
+      console.log(
+        `No divisions found for filter: ${JSON.stringify(divisionFilter)}`
+      );
       return res.json([]);
     }
+    const divisionIds = divisions.map((d) => d._id);
 
-    // Assume all members are from the same division, take from first member
-    const divisionId = group.members[0].divisionId;
-
-    // Get all enrolled students in this division who are registered
+    // Get all enrolled students in these divisions who are registered
     const enrollments = await Enrollment.find({
-      divisionId: divisionId,
+      divisionId: { $in: divisionIds },
       isRegistered: true,
     }).populate("divisionId", "course semester year");
 
     if (enrollments.length === 0) {
-      console.log(`No enrollments found for division ID: ${divisionId}`);
+      console.log(`No enrollments found for divisions: ${divisionIds}`);
       return res.json([]);
     }
 
@@ -193,10 +243,12 @@ export const getAvailableStudents = async (req, res) => {
       g.members.map((m) => m.enrollmentNumber)
     );
 
-    // Filter out students already in any group, and exclude current group's members specifically
+    // Exclude current group's members
     const currentGroupEnrollments = group.members.map(
       (m) => m.enrollmentNumber
     );
+
+    // Filter out students already in any group, and exclude current group's members
     const availableStudents = enrollments
       .filter(
         (e) =>
@@ -204,14 +256,17 @@ export const getAvailableStudents = async (req, res) => {
           !currentGroupEnrollments.includes(e.enrollmentNumber)
       )
       .map((e) => ({
-        _id: e._id,
         enrollmentNumber: e.enrollmentNumber,
         name: e.studentName || "Unknown Student",
         className: `${e.divisionId.course} ${e.divisionId.semester}`,
       }));
 
     console.log(
-      `Found ${availableStudents.length} available students for group ${id}`
+      `Found ${
+        availableStudents.length
+      } available students for group ${id} with filter ${JSON.stringify(
+        divisionFilter
+      )}`
     );
 
     res.json(availableStudents);

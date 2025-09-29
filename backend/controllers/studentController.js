@@ -1,4 +1,3 @@
-// import Student from "../models/student.js";
 import Division from "../models/division.js";
 import Enrollment from "../models/enrollment.js";
 

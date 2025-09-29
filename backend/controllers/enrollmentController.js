@@ -1,6 +1,5 @@
 import Enrollment from "../models/enrollment.js";
 import Division from "../models/division.js";
-// import Student from "../models/student.js";
 
 // GET /api/enrollments - Get all enrollments
 export const getAllEnrollments = async (req, res) => {

@@ -183,14 +183,14 @@ function GroupManagement() {
       !selectedGroup ||
       !selectedGroup.members ||
       selectedGroup.members.length === 0 ||
-      !selectedGroup.members[0]?.className
+      !selectedGroup.members[0]?.divisionId
     )
       return [];
     try {
       const headers = { Authorization: `Bearer ${adminToken}` };
-      const classNameParts = selectedGroup.members[0].className.split(" ");
-      const groupCourse = classNameParts[0];
-      const groupSemester = parseInt(classNameParts[1], 10);
+      const member = selectedGroup.members[0];
+      const groupCourse = member.divisionId.course;
+      const groupSemester = member.divisionId.semester;
       const groupYear = selectedGroup.year;
 
       // Use backend API to get available students
