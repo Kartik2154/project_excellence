@@ -373,7 +373,11 @@ function GroupManagement() {
       return;
     }
     if (selectedGroup.members.length + selectedStudents.length > 4) {
-      setErrorMessage("Cannot add more than 4 students to a group!");
+      setErrorMessage(
+        `Cannot add more than 4 students to a group! You can add up to ${
+          4 - selectedGroup.members.length
+        } more.`
+      );
       setTimeout(() => setErrorMessage(""), 3000);
       return;
     }
@@ -544,9 +548,9 @@ function GroupManagement() {
             </h2>
             <button
               onClick={handleOpenAddStudentModal}
-              disabled={!hasMembers}
+              disabled={!hasMembers || selectedGroup.members.length >= 4}
               className={`flex items-center bg-gradient-to-r from-accent-teal to-cyan-500 text-white py-2 px-4 sm:px-3 rounded-lg font-semibold transition duration-200 shadow-neumorphic border border-white/20 backdrop-blur-sm animate-pulse-once ${
-                !hasMembers
+                !hasMembers || selectedGroup.members.length >= 4
                   ? "opacity-50 cursor-not-allowed"
                   : "hover:bg-opacity-90 hover:scale-105"
               }`}
@@ -806,6 +810,9 @@ function GroupManagement() {
             <h2 className="text-2xl font-bold text-white mb-6 text-center tracking-tight">
               Add Student to Group
             </h2>
+            <p className="text-white/80 text-center mb-4">
+              You can select up to {4 - selectedGroup.members.length} students
+            </p>
             <div className="space-y-4 max-h-96 overflow-y-auto">
               {availableStudents.length > 0 ? (
                 availableStudents.map((student) => (
@@ -820,10 +827,15 @@ function GroupManagement() {
                         checked={selectedStudents.includes(
                           student.enrollmentNumber
                         )}
+                        disabled={
+                          selectedStudents.length >=
+                            4 - selectedGroup.members.length &&
+                          !selectedStudents.includes(student.enrollmentNumber)
+                        }
                         onChange={() =>
                           handleCheckboxChange(student.enrollmentNumber)
                         }
-                        className="mr-4 w-4 h-4 text-accent-teal bg-white/10 border-white/20 rounded focus:ring-accent-teal focus:ring-2"
+                        className="mr-4 w-4 h-4 text-accent-teal bg-white/10 border-white/20 rounded focus:ring-accent-teal focus:ring-2 disabled:opacity-50 disabled:cursor-not-allowed"
                       />
                       <div>
                         <span className="font-semibold text-white">
