@@ -573,11 +573,6 @@ function GroupManagement() {
                     <div className="text-sm text-white/80 flex items-center">
                       <Hash size={16} className="mr-1 text-accent-teal" />
                       <span>{member.enrollmentNumber}</span>
-                      <span className="ml-4">
-                        {member.divisionId
-                          ? `${member.divisionId.course} ${member.divisionId.semester}`
-                          : "N/A"}
-                      </span>
                     </div>
                   </div>
                 </div>
